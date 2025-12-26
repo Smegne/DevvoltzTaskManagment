@@ -61,9 +61,7 @@ const PRIORITIES = [
 
 const TEAM_MEMBERS = [
   { id: "current", name: "Myself" },
-  { id: "unassigned", name: "Unassigned" },
-  { id: "2", name: "Alex Chen" },
-  { id: "3", name: "Sarah Kim" },
+  
 ]
 
 export function TaskDialog({ open, onOpenChange, onSave, task, isSubmitting = false }: TaskDialogProps) {

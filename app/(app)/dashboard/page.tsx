@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import TaskViewModal from "@/components/task-view-modal"
 
 interface DatabaseTask {
   id: number
@@ -52,6 +53,7 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<number | null>(null)
+  const [viewingTask, setViewingTask] = useState<DatabaseTask | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
@@ -171,6 +173,25 @@ export default function DashboardPage() {
     } finally {
       setIsUpdatingStatus(null)
     }
+  }
+
+  // Function to render HTML description safely with rich text formatting
+  const renderRichDescription = (html: string | null) => {
+    if (!html) return (
+      <p className="text-sm text-muted-foreground italic">No description</p>
+    );
+    
+    // Create a safe HTML string with basic styling
+    const safeHtml = html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
+      .replace(/on\w+="[^"]*"/g, '') // Remove event handlers
+    
+    return (
+      <div 
+        className="prose prose-sm max-w-none dark:prose-invert line-clamp-2"
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+    );
   }
 
   // Calculate stats - updated to include paused
@@ -526,36 +547,46 @@ export default function DashboardPage() {
                   return (
                     <div 
                       key={task.id} 
-                      className={`p-3 rounded-lg border-l-4 ${priorityColors[task.priority] || 'border-gray-300'}`}
+                      className={`p-3 rounded-lg border-l-4 transition-all duration-200 hover:shadow-md ${priorityColors[task.priority] || 'border-gray-300'}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium truncate">{task.title}</p>
+                          <div className="flex items-center gap-2 mb-2">
+                            <p className="font-medium truncate text-gray-900 dark:text-gray-100">{task.title}</p>
                             {isAssignedToMe && (
                               <Badge variant="outline" className="text-xs">
                                 Assigned to me
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {task.description || "No description"}
-                          </p>
+                          
+                          {/* Rich text description */}
+                          <div className="mb-3 min-h-[40px] max-h-[60px] overflow-hidden">
+                            {renderRichDescription(task.description)}
+                          </div>
                           
                           {/* Task metadata */}
-                          <div className="flex flex-wrap gap-2 mt-2 text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                             {task.creator_name && (
-                              <span className="flex items-center gap-1">
+                              <div className="flex items-center gap-1">
                                 <Users className="h-3 w-3" />
-                                {task.creator_name}
-                              </span>
+                                <span className="truncate max-w-[80px]">{task.creator_name}</span>
+                              </div>
                             )}
                             {task.due_date && (
-                              <span className="flex items-center gap-1">
+                              <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                Due: {new Date(task.due_date).toLocaleDateString()}
-                              </span>
+                                <span className={new Date(task.due_date) < new Date() && task.status !== 'done' ? 'text-red-600 font-medium' : ''}>
+                                  Due: {new Date(task.due_date).toLocaleDateString()}
+                                </span>
+                              </div>
                             )}
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${priorityColors[task.priority].replace('bg-', 'border-')}`}
+                            >
+                              {priorityDisplay[task.priority]}
+                            </Badge>
                           </div>
                         </div>
                         
@@ -571,19 +602,30 @@ export default function DashboardPage() {
                           </div>
                           
                           <div className="flex gap-1">
+                            {/* Edit button - only for users who can edit */}
                             {canEdit ? (
                               <Link href={`/tasks/edit/${task.id}`}>
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                                  <Edit className="h-3 w-3" />
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="h-7 w-7 p-0"
+                                  title="Edit task"
+                                >
+                         
                                 </Button>
                               </Link>
-                            ) : (
-                              <Link href={`/tasks/view/${task.id}`}>
-                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                              </Link>
-                            )}
+                            ) : null}
+                            
+                            {/* View button - opens modal */}
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-7 w-7 p-0"
+                              title="View task details"
+                              onClick={() => setViewingTask(task)}
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -633,7 +675,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* My Tasks List */}
+                {/* My Tasks List with Rich Text */}
                 <div>
                   <h4 className="font-medium mb-2">My Tasks</h4>
                   <div className="space-y-2">
@@ -655,63 +697,91 @@ export default function DashboardPage() {
                         const statusOptions = getNextStatusOptions(task.status);
                         
                         return (
-                          <div key={task.id} className="flex items-center justify-between p-2 hover:bg-accent rounded">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium truncate">{task.title}</span>
-                                {task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done' && (
-                                  <Badge variant="outline" className="text-xs text-red-600">
-                                    Overdue
+                          <div key={task.id} className="group p-3 hover:bg-accent rounded-lg border transition-all duration-200">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Button 
+                                    variant="link" 
+                                    className="text-sm font-medium truncate hover:text-primary transition-colors p-0 h-auto"
+                                    onClick={() => setViewingTask(task)}
+                                  >
+                                    {task.title}
+                                  </Button>
+                                  {task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done' && (
+                                    <Badge variant="outline" className="text-xs text-red-600">
+                                      Overdue
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                {/* Rich text description preview */}
+                                <div className="mb-2 max-h-[40px] overflow-hidden">
+                                  {renderRichDescription(task.description)}
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  <Badge className={`text-xs ${statusColors[task.status]} flex items-center gap-1`}>
+                                    {getStatusIcon(task.status)}
+                                    {getStatusDisplay(task.status)}
                                   </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-1">
+                                {/* View button */}
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="View task details"
+                                  onClick={() => setViewingTask(task)}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                                
+                                {/* Status dropdown */}
+                                {statusOptions.length > 0 && (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        disabled={isUpdating}
+                                        className="h-7 w-7 p-0"
+                                      >
+                                        {isUpdating ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          <MoreVertical className="h-3 w-3" />
+                                        )}
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-40">
+                                      {statusOptions.map((option) => (
+                                        <DropdownMenuItem
+                                          key={option.value}
+                                          onClick={() => handleStatusUpdate(task.id, option.value)}
+                                          className="flex items-center gap-2 cursor-pointer text-xs"
+                                        >
+                                          {option.icon}
+                                          <span>{option.label}</span>
+                                          <Badge 
+                                            variant="outline" 
+                                            className={`ml-auto text-xs ${statusColors[option.value]}`}
+                                          >
+                                            {getStatusDisplay(option.value)}
+                                          </Badge>
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge className={`text-xs ${statusColors[task.status]} flex items-center gap-1`}>
-                                  {getStatusIcon(task.status)}
-                                  {getStatusDisplay(task.status)}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
-                                </span>
-                              </div>
                             </div>
-                            
-                            {statusOptions.length > 0 && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    disabled={isUpdating}
-                                    className="h-7 w-7 p-0"
-                                  >
-                                    {isUpdating ? (
-                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                      <MoreVertical className="h-3 w-3" />
-                                    )}
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
-                                  {statusOptions.map((option) => (
-                                    <DropdownMenuItem
-                                      key={option.value}
-                                      onClick={() => handleStatusUpdate(task.id, option.value)}
-                                      className="flex items-center gap-2 cursor-pointer text-xs"
-                                    >
-                                      {option.icon}
-                                      <span>{option.label}</span>
-                                      <Badge 
-                                        variant="outline" 
-                                        className={`ml-auto text-xs ${statusColors[option.value]}`}
-                                      >
-                                        {getStatusDisplay(option.value)}
-                                      </Badge>
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
                           </div>
                         )
                       })}
@@ -751,13 +821,21 @@ export default function DashboardPage() {
       {/* Database Info Footer */}
       <div className="text-center text-sm text-muted-foreground pt-4 border-t">
         <p>
-          Connected to MySQL database • {tasks.length} tasks stored • {projects.length} projects • 
+        {tasks.length} tasks stored • {projects.length} projects • 
           Last updated: {new Date().toLocaleTimeString()}
         </p>
         <p className="text-xs mt-1">
           {stats.completed} completed • {stats.inProgress} in progress • {stats.paused} paused
         </p>
       </div>
+
+      {/* Task View Modal */}
+      <TaskViewModal 
+        task={viewingTask}
+        open={!!viewingTask}
+        onOpenChange={(open) => !open && setViewingTask(null)}
+        user={user}
+      />
     </div>
   )
 }

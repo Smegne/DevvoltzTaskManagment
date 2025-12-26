@@ -25,3 +25,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Electron
+dist/
+out/
+node_modules/electron*
+*.dmg
+*.exe
+*.deb
+*.rpm
+*.AppImage
+*.zip
