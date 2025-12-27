@@ -421,36 +421,53 @@ export default function DashboardPage() {
     show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-black p-4 md:p-6 space-y-6">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden -z-10">
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
+ return (
+  <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-blue-950 p-4 md:p-6 space-y-6 relative overflow-hidden">
+    {/* Animated gradient background */}
+    <div className="fixed inset-0 overflow-hidden -z-10">
+      {/* Main gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-blue-950"></div>
+      
+      {/* Animated gradient orbs */}
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent rounded-full blur-3xl animate-pulse delay-1000"></div>
+      
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f12_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f12_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+      
+      {/* Glowing particles */}
+      <div className="absolute top-1/3 left-1/3 w-1 h-1 bg-blue-400 rounded-full animate-ping"></div>
+      <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-cyan-300 rounded-full animate-ping delay-500"></div>
+      <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-purple-400 rounded-full animate-ping delay-1000"></div>
+    </div>
 
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="glass-morphism rounded-2xl p-6 backdrop-blur-xl border border-white/20 shadow-xl"
-      >
+    {/* Header */}
+    <motion.div 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/50 backdrop-blur-xl border border-white/20 shadow-2xl shadow-blue-500/20 rounded-2xl p-6 relative overflow-hidden"
+    >
+      {/* Header background effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent"></div>
+      
+      <div className="relative z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
-                <Activity className="h-6 w-6 text-blue-500" />
+              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30">
+                <Activity className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
                   Welcome back, {user?.name}!
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-gray-500 dark:text-gray-400">
+                  <span className="text-gray-300">
                     {isLoading ? "Syncing data..." : `Managing ${stats.total} tasks across ${stats.activeProjects} projects`}
                   </span>
-                  <Badge className="glass-morphism border-white/20 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 capitalize">
+                  <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/30 text-cyan-300 capitalize">
                     {user?.role}
                   </Badge>
                 </div>
@@ -458,8 +475,8 @@ export default function DashboardPage() {
             </div>
             {error && (
               <div className="flex items-center gap-2 mt-2 animate-fade-in">
-                <AlertCircle className="h-4 w-4 text-amber-500" />
-                <span className="text-sm text-amber-600 dark:text-amber-400">{error}</span>
+                <AlertCircle className="h-4 w-4 text-amber-400" />
+                <span className="text-sm text-amber-400">{error}</span>
               </div>
             )}
           </div>
@@ -472,465 +489,486 @@ export default function DashboardPage() {
                 placeholder="Search tasks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="glass-input pl-9 pr-4 py-2 rounded-xl border border-white/20 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 w-full md:w-64"
+                className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/30 pl-9 pr-4 py-2 rounded-xl text-white placeholder:text-gray-400 transition-all duration-300 w-full md:w-64"
               />
             </div>
             
           </div>
         </div>
+      </div>
+    </motion.div>
+
+    {/* Stats Grid */}
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+    >
+      {[
+        {
+          title: "Team Tasks",
+          value: stats.total,
+          icon: <Users className="h-5 w-5" />,
+          color: "from-blue-600 to-cyan-500",
+          progress: completionPercentage,
+          label: `${stats.completed} completed • ${stats.paused} paused`
+        },
+        {
+          title: "My Tasks",
+          value: stats.myTasks,
+          icon: <Target className="h-5 w-5" />,
+          color: "from-purple-600 to-pink-500",
+          progress: stats.myTasks > 0 ? Math.round((stats.myCompleted / stats.myTasks) * 100) : 0,
+          label: `${stats.myCompleted} done • ${myTasks.filter(t => t.status === 'in_progress').length} active`
+        },
+        {
+          title: "High Priority",
+          value: stats.highPriority,
+          icon: <AlertCircle className="h-5 w-5" />,
+          color: "from-red-600 to-orange-500",
+          progress: stats.highPriority > 0 ? Math.min(100, (stats.highPriority / stats.total) * 200) : 0,
+          label: `${stats.overdue} overdue • ${stats.mediumPriority} medium`
+        },
+        {
+          title: "Active Projects",
+          value: stats.activeProjects,
+          icon: <FolderKanban className="h-5 w-5" />,
+          color: "from-green-600 to-emerald-500",
+          progress: projects.length > 0 ? Math.min(100, (stats.activeProjects / projects.length) * 100) : 0,
+          label: `${projects.length} total • ${projects.filter(p => p.status === 'completed').length} completed`
+        }
+      ].map((stat, index) => (
+        <motion.div key={index} variants={itemVariants}>
+          <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-blue-500/10 hover:shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+            {/* Gradient border top */}
+            <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${stat.color}`} />
+            
+            {/* Background effects */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5"></div>
+            
+            <CardHeader className="pb-2 relative z-10">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-300">
+                  {stat.title}
+                </CardTitle>
+                <div className={`p-2 rounded-lg bg-gradient-to-r ${stat.color}/20 border ${stat.color}/30 group-hover:scale-110 transition-transform duration-300`}>
+                  {stat.icon}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-white">{stat.value}</span>
+                <span className="text-sm text-gray-400">tasks</span>
+              </div>
+              <div className="relative mt-3">
+                <div className="h-2 bg-gray-800/50 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full bg-gradient-to-r ${stat.color} transition-all duration-1000`} 
+                    style={{ width: `${stat.progress}%` }}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                {stat.label}
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ))}
+    </motion.div>
+
+    {/* Main Content */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Recent Tasks - 2/3 width */}
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="lg:col-span-2 space-y-6"
+      >
+        {/* Tabs */}
+        <div className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/40 backdrop-blur-xl rounded-xl p-1 border border-white/20">
+          <div className="flex space-x-1">
+            {[
+              { id: "overview", label: "Overview", icon: <BarChart3 className="h-4 w-4" /> },
+              { id: "tasks", label: "All Tasks", icon: <CheckCircle2 className="h-4 w-4" /> },
+              { id: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative overflow-hidden ${
+                  activeTab === tab.id
+                    ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg"
+                    : "text-gray-400 hover:text-white bg-gradient-to-r from-gray-800/50 to-black/50"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Tasks Card */}
+        <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-blue-500/10 overflow-hidden">
+          {/* Background effects */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-cyan-500/5"></div>
+          
+          <CardHeader className="relative z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Zap className="h-5 w-5 text-blue-400" />
+                  Recent Team Tasks
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  Latest updates from your team
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="bg-gradient-to-r from-gray-800/50 to-black/50 border-gray-700/50 text-gray-300 hover:text-white">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-gradient-to-br from-gray-900 to-black border-white/20 backdrop-blur-xl">
+                    {["all", "todo", "in_progress", "review", "done", "paused"].map((status) => (
+                      <DropdownMenuItem
+                        key={status}
+                        onClick={() => setFilterStatus(status)}
+                        className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-white/5"
+                      >
+                        <div className={`h-2 w-2 rounded-full ${
+                          status === "all" ? "bg-gray-400" :
+                          status === "todo" ? "bg-gray-500" :
+                          status === "in_progress" ? "bg-yellow-500" :
+                          status === "review" ? "bg-orange-500" :
+                          status === "done" ? "bg-green-500" : "bg-purple-500"
+                        }`} />
+                        {getStatusDisplay(status)}
+                        {filterStatus === status && <CheckCircle2 className="h-3 w-3 ml-auto text-blue-400" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Link href="/tasks">
+                  <Button variant="ghost" size="sm" className="group bg-gradient-to-r from-gray-800/50 to-black/50 border-gray-700/50 text-gray-300 hover:text-white">
+                    View All
+                    <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0 relative z-10">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500/30 border-t-blue-500"></div>
+                  <p className="text-gray-400">Loading tasks...</p>
+                </div>
+              </div>
+            ) : recentTasks.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center mb-4">
+                  <CheckCircle2 className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">No tasks yet</h3>
+                <p className="text-gray-400 mb-6 max-w-sm mx-auto">
+                  Be the first to create a task for your team!
+                </p>
+                <Link href="/tasks/new">
+                  <Button className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Task
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-800/50">
+                <AnimatePresence>
+                  {recentTasks.map((task) => {
+                    const isAssignedToMe = task.assigned_to === user?.id
+                    
+                    return (
+                      <motion.div
+                        key={task.id}
+                        id={`task-${task.id}`}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className={`p-4 hover:bg-gradient-to-r hover:from-blue-500/10 hover:to-cyan-500/10 transition-all duration-300 group ${priorityColors[task.priority]} border-b border-gray-800/30 last:border-b-0`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-3 mb-3">
+                              <div className={`p-2 rounded-lg ${statusColors[task.status]} mt-1`}>
+                                {getStatusIcon(task.status)}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h4 className="font-semibold text-white group-hover:text-blue-400 transition-colors">
+                                    {task.title}
+                                  </h4>
+                                  {isAssignedToMe && (
+                                    <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border-blue-500/30">
+                                      Assigned to me
+                                    </Badge>
+                                  )}
+                                </div>
+                                {renderRichDescription(task.description)}
+                                <div className="flex flex-wrap items-center gap-3 mt-3">
+                                  {task.creator_name && (
+                                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                                      <div className="h-6 w-6 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+                                        <Users className="h-3 w-3" />
+                                      </div>
+                                      <span>{task.creator_name}</span>
+                                    </div>
+                                  )}
+                                  {task.due_date && (
+                                    <div className={`flex items-center gap-2 text-sm ${
+                                      new Date(task.due_date) < new Date() && task.status !== 'done' 
+                                        ? 'text-red-400 font-medium' 
+                                        : 'text-gray-400'
+                                    }`}>
+                                      <Calendar className="h-4 w-4" />
+                                      <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
+                                    </div>
+                                  )}
+                                  <Badge 
+                                    className={`bg-gradient-to-r ${priorityColors[task.priority]} border-none text-white`}
+                                  >
+                                    {priorityDisplay[task.priority]}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col items-end gap-2">
+                            <Badge className={cn("flex items-center gap-1.5 text-white", statusColors[task.status])}>
+                              {getStatusDisplay(task.status)}
+                            </Badge>
+                            
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                className="h-8 w-8 p-0 rounded-full hover:bg-white/10 text-gray-400 hover:text-white"
+                                title="View task details"
+                                onClick={() => setViewingTask(task)}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                              {renderTaskStatusDropdown(task)}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </AnimatePresence>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </motion.div>
 
-      {/* Stats Grid */}
+      {/* Right Sidebar - My Tasks & Quick Stats */}
       <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="space-y-6"
       >
-        {[
-          {
-            title: "Team Tasks",
-            value: stats.total,
-            icon: <Users className="h-5 w-5" />,
-            color: "from-blue-500 to-cyan-500",
-            progress: completionPercentage,
-            label: `${stats.completed} completed • ${stats.paused} paused`
-          },
-          {
-            title: "My Tasks",
-            value: stats.myTasks,
-            icon: <Target className="h-5 w-5" />,
-            color: "from-purple-500 to-pink-500",
-            progress: stats.myTasks > 0 ? Math.round((stats.myCompleted / stats.myTasks) * 100) : 0,
-            label: `${stats.myCompleted} done • ${myTasks.filter(t => t.status === 'in_progress').length} active`
-          },
-          {
-            title: "High Priority",
-            value: stats.highPriority,
-            icon: <AlertCircle className="h-5 w-5" />,
-            color: "from-red-500 to-orange-500",
-            progress: stats.highPriority > 0 ? Math.min(100, (stats.highPriority / stats.total) * 200) : 0,
-            label: `${stats.overdue} overdue • ${stats.mediumPriority} medium`
-          },
-          {
-            title: "Active Projects",
-            value: stats.activeProjects,
-            icon: <FolderKanban className="h-5 w-5" />,
-            color: "from-green-500 to-emerald-500",
-            progress: projects.length > 0 ? Math.min(100, (stats.activeProjects / projects.length) * 100) : 0,
-            label: `${projects.length} total • ${projects.filter(p => p.status === 'completed').length} completed`
-          }
-        ].map((stat, index) => (
-          <motion.div key={index} variants={itemVariants}>
-            <Card className="glass-morphism hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border-white/20 overflow-hidden group">
-              <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${stat.color}`} />
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    {stat.title}
-                  </CardTitle>
-                  <div className={`p-2 rounded-lg bg-gradient-to-r ${stat.color}/10 group-hover:scale-110 transition-transform duration-300`}>
-                    {stat.icon}
+        {/* My Tasks Card */}
+        <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-purple-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-purple-500/10">
+          {/* Background effects */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5"></div>
+          
+          <CardHeader className="relative z-10">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Target className="h-5 w-5 text-purple-400" />
+              My Tasks
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Your assigned tasks
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            {myTasks.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-gray-400" />
+                </div>
+                <p className="text-gray-400 mb-4">No tasks assigned yet</p>
+                <Link href="/tasks">
+                  <Button variant="outline" className="w-full border-gray-700/50 text-gray-300 hover:text-white">
+                    Browse Available Tasks
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Stats Overview */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "To Do", value: myTasks.filter(t => t.status === 'todo').length, color: "from-gray-500 to-gray-600" },
+                    { label: "Active", value: myTasks.filter(t => t.status === 'in_progress').length, color: "from-yellow-500 to-amber-600" },
+                    { label: "Done", value: myTasks.filter(t => t.status === 'done').length, color: "from-green-500 to-emerald-600" },
+                  ].map((stat, index) => (
+                    <div 
+                      key={index}
+                      className="text-center p-3 rounded-xl bg-gradient-to-br from-white/10 to-transparent backdrop-blur-sm border border-white/10 hover:scale-105 transition-transform duration-300"
+                    >
+                      <div className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                        {stat.value}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {stat.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* My Tasks List */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm text-gray-400">Pending Actions</h4>
+                  {myTasks.slice(0, 3).map((task) => (
+                    <div 
+                      key={task.id}
+                      className="group p-3 rounded-lg bg-gradient-to-r from-white/5 to-transparent hover:from-white/10 border border-white/10 transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <button 
+                              onClick={() => setViewingTask(task)}
+                              className="text-sm font-medium text-left hover:text-blue-400 transition-colors text-white"
+                            >
+                              {task.title}
+                            </button>
+                            {task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done' && (
+                              <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Badge className={cn("text-xs text-white", statusColors[task.status])}>
+                              {getStatusDisplay(task.status)}
+                            </Badge>
+                            <span className="text-xs text-gray-400">
+                              Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No date'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quick Actions */}
+                <div className="pt-4 border-t border-white/10">
+                  <h4 className="font-semibold text-sm text-gray-400 mb-3">Quick Actions</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href="/tasks">
+                      <Button variant="outline" className="w-full border-gray-700/50 text-gray-300 hover:text-white">
+                        View All
+                      </Button>
+                    </Link>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold">{stat.value}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">tasks</span>
-                </div>
-                <Progress 
-                  value={stat.progress} 
-                  className="h-2 mt-3 bg-gray-200/50 dark:bg-gray-700/50 overflow-hidden"
-                />
-                <div className={`h-full bg-gradient-to-r ${stat.color} transition-all duration-1000`} style={{ width: `${stat.progress}%` }} />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  {stat.label}
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </motion.div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Tasks - 2/3 width */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="lg:col-span-2 space-y-6"
-        >
-          {/* Tabs */}
-          <div className="glass-morphism rounded-xl p-1 backdrop-blur-xl border border-white/20">
-            <div className="flex space-x-1">
-              {[
-                { id: "overview", label: "Overview", icon: <BarChart3 className="h-4 w-4" /> },
-                { id: "tasks", label: "All Tasks", icon: <CheckCircle2 className="h-4 w-4" /> },
-                { id: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    activeTab === tab.id
-                      ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300"
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
+        {/* Performance Card */}
+        <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-green-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-green-500/10">
+          <CardHeader className="relative z-10">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <TrendingUp className="h-5 w-5 text-green-400" />
+              Performance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Completion Rate</span>
+                <span className="text-lg font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                  {completionPercentage}%
+                </span>
+              </div>
+              <div className="h-2 bg-gray-800/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-1000" 
+                  style={{ width: `${completionPercentage}%` }}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">On-time Delivery</span>
+                <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  {stats.overdue === 0 ? '100%' : `${Math.max(0, 100 - (stats.overdue / stats.total) * 100)}%`}
+                </span>
+              </div>
+              <div className="h-2 bg-gray-800/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-1000" 
+                  style={{ width: `${Math.max(0, 100 - (stats.overdue / stats.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-orange-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-orange-500/10">
+          <CardHeader className="relative z-10">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Activity className="h-5 w-5 text-orange-400" />
+              Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className="space-y-3">
+              {recentTasks.slice(0, 3).map((task, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <div className={`h-2 w-2 rounded-full animate-pulse ${
+                    task.status === 'done' ? 'bg-green-500' :
+                    task.status === 'in_progress' ? 'bg-yellow-500' :
+                    task.status === 'review' ? 'bg-orange-500' : 'bg-gray-500'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate text-white">{task.title}</p>
+                    <p className="text-xs text-gray-400 truncate">
+                      Updated {new Date(task.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Badge className={`${statusColors[task.status]} text-white`}>
+                    {getStatusDisplay(task.status)}
+                  </Badge>
+                </div>
               ))}
             </div>
-          </div>
-
-          {/* Recent Tasks Card */}
-          <Card className="glass-morphism border-white/20 shadow-xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-500/5 to-cyan-500/5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-blue-500" />
-                    Recent Team Tasks
-                  </CardTitle>
-                  <CardDescription>
-                    Latest updates from your team
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="glass-morphism border border-white/20">
-                        <Filter className="h-4 w-4 mr-2" />
-                        Filter
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="glass-morphism border-white/20 backdrop-blur-xl">
-                      {["all", "todo", "in_progress", "review", "done", "paused"].map((status) => (
-                        <DropdownMenuItem
-                          key={status}
-                          onClick={() => setFilterStatus(status)}
-                          className="flex items-center gap-2"
-                        >
-                          <div className={`h-2 w-2 rounded-full ${
-                            status === "all" ? "bg-gray-400" :
-                            status === "todo" ? "bg-gray-500" :
-                            status === "in_progress" ? "bg-yellow-500" :
-                            status === "review" ? "bg-orange-500" :
-                            status === "done" ? "bg-green-500" : "bg-purple-500"
-                          }`} />
-                          {getStatusDisplay(status)}
-                          {filterStatus === status && <CheckCircle2 className="h-3 w-3 ml-auto" />}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Link href="/tasks">
-                    <Button variant="ghost" size="sm" className="group">
-                      View All
-                      <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary"></div>
-                    <p className="text-gray-500 dark:text-gray-400">Loading tasks...</p>
-                  </div>
-                </div>
-              ) : recentTasks.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 flex items-center justify-center mb-4">
-                    <CheckCircle2 className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">No tasks yet</h3>
-                  <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-                    Be the first to create a task for your team!
-                  </p>
-                  <Link href="/tasks/new">
-                    <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Task
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
-                  <AnimatePresence>
-                    {recentTasks.map((task) => {
-                      const isAssignedToMe = task.assigned_to === user?.id
-                      
-                      return (
-                        <motion.div
-                          key={task.id}
-                          id={`task-${task.id}`}
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className={`p-4 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-cyan-500/5 transition-all duration-300 group ${priorityColors[task.priority]}`}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start gap-3 mb-3">
-                                <div className={`p-2 rounded-lg ${statusColors[task.status]} mt-1`}>
-                                  {getStatusIcon(task.status)}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                      {task.title}
-                                    </h4>
-                                    {isAssignedToMe && (
-                                      <Badge className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
-                                        Assigned to me
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  {renderRichDescription(task.description)}
-                                  <div className="flex flex-wrap items-center gap-3 mt-3">
-                                    {task.creator_name && (
-                                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-                                          <Users className="h-3 w-3" />
-                                        </div>
-                                        <span>{task.creator_name}</span>
-                                      </div>
-                                    )}
-                                    {task.due_date && (
-                                      <div className={`flex items-center gap-2 text-sm ${
-                                        new Date(task.due_date) < new Date() && task.status !== 'done' 
-                                          ? 'text-red-500 font-medium' 
-                                          : 'text-gray-500 dark:text-gray-400'
-                                      }`}>
-                                        <Calendar className="h-4 w-4" />
-                                        <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
-                                      </div>
-                                    )}
-                                    <Badge 
-                                      className={`bg-gradient-to-r ${priorityColors[task.priority]} border-none`}
-                                    >
-                                      {priorityDisplay[task.priority]}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge className={cn("flex items-center gap-1.5", statusColors[task.status])}>
-                                {getStatusDisplay(task.status)}
-                              </Badge>
-                              
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-full hover:bg-white/10"
-                                  title="View task details"
-                                  onClick={() => setViewingTask(task)}
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                </Button>
-                                {renderTaskStatusDropdown(task)}
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )
-                    })}
-                  </AnimatePresence>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Right Sidebar - My Tasks & Quick Stats */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="space-y-6"
-        >
-          {/* My Tasks Card */}
-          <Card className="glass-morphism border-white/20 shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-purple-500/5 to-pink-500/5">
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-purple-500" />
-                My Tasks
-              </CardTitle>
-              <CardDescription>
-                Your assigned tasks
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {myTasks.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">No tasks assigned yet</p>
-                  <Link href="/tasks">
-                    <Button variant="outline" className="w-full border-white/20">
-                      Browse Available Tasks
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Stats Overview */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: "To Do", value: myTasks.filter(t => t.status === 'todo').length, color: "from-gray-500 to-gray-600" },
-                      { label: "Active", value: myTasks.filter(t => t.status === 'in_progress').length, color: "from-yellow-500 to-amber-600" },
-                      { label: "Done", value: myTasks.filter(t => t.status === 'done').length, color: "from-green-500 to-emerald-600" },
-                    ].map((stat, index) => (
-                      <div 
-                        key={index}
-                        className="text-center p-3 rounded-xl bg-gradient-to-br from-white/10 to-transparent backdrop-blur-sm border border-white/10 hover:scale-105 transition-transform duration-300"
-                      >
-                        <div className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
-                          {stat.value}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {stat.label}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* My Tasks List */}
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-gray-600 dark:text-gray-400">Pending Actions</h4>
-                    {myTasks.slice(0, 3).map((task) => (
-                      <div 
-                        key={task.id}
-                        className="group p-3 rounded-lg bg-gradient-to-r from-white/5 to-transparent hover:from-white/10 border border-white/10 transition-all duration-300"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <button 
-                                onClick={() => setViewingTask(task)}
-                                className="text-sm font-medium text-left hover:text-blue-500 transition-colors"
-                              >
-                                {task.title}
-                              </button>
-                              {task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done' && (
-                                <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <Badge className={cn("text-xs", statusColors[task.status])}>
-                                {getStatusDisplay(task.status)}
-                              </Badge>
-                              <span className="text-xs text-gray-500">
-                                Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No date'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="pt-4 border-t border-white/10">
-                    <h4 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-3">Quick Actions</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                     
-                      <Link href="/tasks">
-                        <Button variant="outline" className="w-full border-white/20">
-                          View All
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Performance Card */}
-          <Card className="glass-morphism border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-                Performance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Completion Rate</span>
-                  <span className="text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
-                    {completionPercentage}%
-                  </span>
-                </div>
-                <Progress value={completionPercentage} className="h-2 bg-gray-200/50 dark:bg-gray-700/50" />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">On-time Delivery</span>
-                  <span className="text-lg font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                    {stats.overdue === 0 ? '100%' : `${Math.max(0, 100 - (stats.overdue / stats.total) * 100)}%`}
-                  </span>
-                </div>
-                <Progress 
-                  value={Math.max(0, 100 - (stats.overdue / stats.total) * 100)} 
-                  className="h-2 bg-gray-200/50 dark:bg-gray-700/50" 
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="glass-morphism border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-orange-500" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentTasks.slice(0, 3).map((task, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className={`h-2 w-2 rounded-full animate-pulse ${
-                      task.status === 'done' ? 'bg-green-500' :
-                      task.status === 'in_progress' ? 'bg-yellow-500' :
-                      task.status === 'review' ? 'bg-orange-500' : 'bg-gray-500'
-                    }`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{task.title}</p>
-                      <p className="text-xs text-gray-500 truncate">
-                        Updated {new Date(task.updated_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Badge className={statusColors[task.status]}>
-                      {getStatusDisplay(task.status)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Task View Modal */}
-      <TaskViewModal 
-        task={viewingTask}
-        open={!!viewingTask}
-        onOpenChange={(open) => !open && setViewingTask(null)}
-        user={user}
-      />
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
-  )
+
+    {/* Task View Modal */}
+    <TaskViewModal 
+      task={viewingTask}
+      open={!!viewingTask}
+      onOpenChange={(open) => !open && setViewingTask(null)}
+      user={user}
+    />
+  </div>
+)
 }

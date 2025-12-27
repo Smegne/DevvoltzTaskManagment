@@ -1007,32 +1007,49 @@ export default function TasksPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-black p-4 md:p-6 space-y-6">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden -z-10">
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
+return (
+  <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-blue-950 p-4 md:p-6 space-y-6 relative overflow-hidden">
+    {/* Enhanced animated gradient background */}
+    <div className="fixed inset-0 overflow-hidden -z-10">
+      {/* Main gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-blue-950"></div>
+      
+      {/* Animated gradient orbs */}
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent rounded-full blur-3xl animate-pulse delay-1000"></div>
+      
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f12_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f12_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+      
+      {/* Glowing particles */}
+      <div className="absolute top-1/3 left-1/3 w-1 h-1 bg-blue-400 rounded-full animate-ping"></div>
+      <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-cyan-300 rounded-full animate-ping delay-500"></div>
+      <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-purple-400 rounded-full animate-ping delay-1000"></div>
+    </div>
 
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="glass-morphism rounded-2xl p-6 backdrop-blur-xl border border-white/20 shadow-xl"
-      >
+    {/* Header */}
+    <motion.div 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/50 backdrop-blur-xl border border-white/20 shadow-2xl shadow-blue-500/20 rounded-2xl p-6 relative overflow-hidden"
+    >
+      {/* Header background effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent"></div>
+      
+      <div className="relative z-10">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
-                <CheckCircle className="h-6 w-6 text-blue-500" />
+              <div className="p-2 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30">
+                <CheckCircle className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
                   Task Management
                 </h2>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-gray-300 mt-1">
                   {isLoading ? "Loading tasks..." : `Managing ${tasks.length} tasks across ${uniqueModules.length} modules`}
                 </p>
               </div>
@@ -1041,16 +1058,16 @@ export default function TasksPage() {
             {/* Quick Stats */}
             <div className="flex flex-wrap gap-3 mt-4">
               {[
-                { label: "All Tasks", value: taskCounts.all, color: "from-gray-500 to-gray-600" },
-                { label: "To Do", value: taskCounts.todo, color: "from-blue-500 to-cyan-500" },
-                { label: "In Progress", value: taskCounts.in_progress, color: "from-yellow-500 to-amber-500" },
-                { label: "Completed", value: taskCounts.done, color: "from-green-500 to-emerald-500" },
+                { label: "All Tasks", value: taskCounts.all, color: "from-gray-400 to-gray-500" },
+                { label: "To Do", value: taskCounts.todo, color: "from-blue-400 to-cyan-400" },
+                { label: "In Progress", value: taskCounts.in_progress, color: "from-yellow-400 to-amber-400" },
+                { label: "Completed", value: taskCounts.done, color: "from-green-400 to-emerald-400" },
               ].map((stat, index) => (
                 <div 
                   key={index}
-                  className="px-3 py-1.5 rounded-full bg-gradient-to-r bg-white/5 backdrop-blur-sm border border-white/10"
+                  className="px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-800/50 to-black/50 backdrop-blur-sm border border-gray-700/50"
                 >
-                  <span className="text-sm font-medium">{stat.label}: </span>
+                  <span className="text-sm font-medium text-gray-300">{stat.label}: </span>
                   <span className={`font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
                     {stat.value}
                   </span>
@@ -1062,23 +1079,30 @@ export default function TasksPage() {
           <div className="flex items-center gap-3">
             <Button 
               onClick={handleCreateNew}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/20 group"
+              className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/30 text-white group relative overflow-hidden"
               size="lg"
             >
-              <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-              New Task
+              {/* Button gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-cyan-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Plus className="h-5 w-5 mr-2 relative z-10 group-hover:rotate-90 transition-transform duration-300" />
+              <span className="relative z-10">New Task</span>
             </Button>
           </div>
         </div>
-      </motion.div>
+      </div>
+    </motion.div>
 
-      {/* Search and Filters Bar */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="glass-morphism rounded-2xl p-6 backdrop-blur-xl border border-white/20 shadow-xl"
-      >
+    {/* Search and Filters Bar */}
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+      className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/50 backdrop-blur-xl border border-white/20 shadow-2xl shadow-blue-500/20 rounded-2xl p-6 relative overflow-hidden"
+    >
+      {/* Background effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5"></div>
+      
+      <div className="relative z-10">
         <div className="flex flex-col gap-6">
           {/* Main Search */}
           <div className="relative">
@@ -1088,7 +1112,7 @@ export default function TasksPage() {
               placeholder="Search tasks by title, description, or module..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="glass-input w-full pl-12 pr-10 py-3 rounded-xl border border-white/20 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+              className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm w-full pl-12 pr-10 py-3 rounded-xl border border-gray-700/50 focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/30 text-white placeholder:text-gray-400 transition-all duration-300"
             />
             {searchQuery && (
               <button
@@ -1105,8 +1129,8 @@ export default function TasksPage() {
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {/* Status Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <Sparkles className="h-3 w-3" />
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-blue-400" />
                   Status
                 </label>
                 <Select 
@@ -1114,24 +1138,24 @@ export default function TasksPage() {
                   onValueChange={(v) => setStatusFilter(v as TaskStatus)}
                   disabled={isLoading}
                 >
-                  <SelectTrigger className="glass-input border-white/20">
+                  <SelectTrigger className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
-                  <SelectContent className="glass-morphism border-white/20 backdrop-blur-xl">
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="todo">To Do</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="review">Review</SelectItem>
-                    <SelectItem value="done">Completed</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
+                  <SelectContent className="bg-gradient-to-br from-gray-900 to-black border-white/20 backdrop-blur-xl">
+                    <SelectItem value="all" className="text-gray-300 hover:text-white">All Status</SelectItem>
+                    <SelectItem value="todo" className="text-gray-300 hover:text-white">To Do</SelectItem>
+                    <SelectItem value="in_progress" className="text-gray-300 hover:text-white">In Progress</SelectItem>
+                    <SelectItem value="review" className="text-gray-300 hover:text-white">Review</SelectItem>
+                    <SelectItem value="done" className="text-gray-300 hover:text-white">Completed</SelectItem>
+                    <SelectItem value="paused" className="text-gray-300 hover:text-white">Paused</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Priority Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <Star className="h-3 w-3" />
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <Star className="h-3 w-3 text-yellow-400" />
                   Priority
                 </label>
                 <Select 
@@ -1139,22 +1163,22 @@ export default function TasksPage() {
                   onValueChange={(v) => setPriorityFilter(v as Priority)}
                   disabled={isLoading}
                 >
-                  <SelectTrigger className="glass-input border-white/20">
+                  <SelectTrigger className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white">
                     <SelectValue placeholder="All Priorities" />
                   </SelectTrigger>
-                  <SelectContent className="glass-morphism border-white/20 backdrop-blur-xl">
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
+                  <SelectContent className="bg-gradient-to-br from-gray-900 to-black border-white/20 backdrop-blur-xl">
+                    <SelectItem value="all" className="text-gray-300 hover:text-white">All Priorities</SelectItem>
+                    <SelectItem value="high" className="text-gray-300 hover:text-white">High</SelectItem>
+                    <SelectItem value="medium" className="text-gray-300 hover:text-white">Medium</SelectItem>
+                    <SelectItem value="low" className="text-gray-300 hover:text-white">Low</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Module Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <FolderKanban className="h-3 w-3" />
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <FolderKanban className="h-3 w-3 text-purple-400" />
                   Module
                 </label>
                 <Select 
@@ -1162,25 +1186,25 @@ export default function TasksPage() {
                   onValueChange={setModuleFilter}
                   disabled={isLoading}
                 >
-                  <SelectTrigger className="glass-input border-white/20">
+                  <SelectTrigger className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white">
                     <SelectValue placeholder="All Modules" />
                   </SelectTrigger>
-                  <SelectContent className="glass-morphism border-white/20 backdrop-blur-xl">
-                    <SelectItem value="all">All Modules</SelectItem>
+                  <SelectContent className="bg-gradient-to-br from-gray-900 to-black border-white/20 backdrop-blur-xl">
+                    <SelectItem value="all" className="text-gray-300 hover:text-white">All Modules</SelectItem>
                     {uniqueModules.map((module) => (
-                      <SelectItem key={module} value={module}>
+                      <SelectItem key={module} value={module} className="text-gray-300 hover:text-white">
                         {module}
                       </SelectItem>
                     ))}
-                    <SelectItem value="no-module">No Module</SelectItem>
+                    <SelectItem value="no-module" className="text-gray-300 hover:text-white">No Module</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Sort Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <ArrowUpDown className="h-3 w-3" />
+                <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                  <ArrowUpDown className="h-3 w-3 text-cyan-400" />
                   Sort By
                 </label>
                 <div className="flex gap-2">
@@ -1189,20 +1213,20 @@ export default function TasksPage() {
                     onValueChange={(v) => setSortBy(v as any)}
                     disabled={isLoading}
                   >
-                    <SelectTrigger className="glass-input border-white/20 flex-1">
+                    <SelectTrigger className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white flex-1">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
-                    <SelectContent className="glass-morphism border-white/20 backdrop-blur-xl">
-                      <SelectItem value="due_date">Due Date</SelectItem>
-                      <SelectItem value="priority">Priority</SelectItem>
-                      <SelectItem value="created_at">Created Date</SelectItem>
+                    <SelectContent className="bg-gradient-to-br from-gray-900 to-black border-white/20 backdrop-blur-xl">
+                      <SelectItem value="due_date" className="text-gray-300 hover:text-white">Due Date</SelectItem>
+                      <SelectItem value="priority" className="text-gray-300 hover:text-white">Priority</SelectItem>
+                      <SelectItem value="created_at" className="text-gray-300 hover:text-white">Created Date</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={toggleSortOrder}
-                    className="glass-input border-white/20"
+                    className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white"
                   >
                     {sortOrder === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
@@ -1214,7 +1238,7 @@ export default function TasksPage() {
               <Button
                 variant="outline"
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="glass-input border-white/20"
+                className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white hover:text-white"
               >
                 <Filter className="h-4 w-4 mr-2" />
                 {showAdvancedFilters ? "Hide Filters" : "More Filters"}
@@ -1222,7 +1246,7 @@ export default function TasksPage() {
               <Button
                 variant="ghost"
                 onClick={clearFilters}
-                className="glass-input border-white/20"
+                className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white hover:text-white"
               >
                 Clear All
               </Button>
@@ -1237,9 +1261,10 @@ export default function TasksPage() {
                 size="sm"
                 onClick={() => setViewMode('grid')}
                 className={cn(
+                  "transition-all duration-300",
                   viewMode === 'grid' 
-                    ? "bg-gradient-to-r from-blue-500 to-cyan-500" 
-                    : "glass-input border-white/20"
+                    ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg" 
+                    : "bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white hover:text-white"
                 )}
               >
                 <Grid3x3 className="h-4 w-4" />
@@ -1250,9 +1275,10 @@ export default function TasksPage() {
                 size="sm"
                 onClick={() => setViewMode('list')}
                 className={cn(
+                  "transition-all duration-300",
                   viewMode === 'list' 
-                    ? "bg-gradient-to-r from-blue-500 to-cyan-500" 
-                    : "glass-input border-white/20"
+                    ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg" 
+                    : "bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white hover:text-white"
                 )}
               >
                 <List className="h-4 w-4" />
@@ -1260,280 +1286,286 @@ export default function TasksPage() {
               </Button>
             </div>
             
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-400">
               Showing {filteredTasks.length} of {tasks.length} tasks
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
+    </motion.div>
 
-      {/* Module Stats */}
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
-      >
-        {MODULES.map((module, index) => {
-          const moduleTasks = tasks.filter(t => t.module_name === module.name)
-          const completedTasks = moduleTasks.filter(t => t.status === 'done').length
-          const completionRate = moduleTasks.length > 0 ? Math.round((completedTasks / moduleTasks.length) * 100) : 0
-          
-          return (
-            <motion.div
-              key={module.id}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                show: { opacity: 1, y: 0, transition: { delay: index * 0.1 } }
-              }}
-            >
-              <Card className="glass-morphism hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border-white/20 overflow-hidden group">
-                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${module.color}`} />
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className={`h-10 w-10 rounded-lg bg-gradient-to-r ${module.color} flex items-center justify-center`}>
-                          <span className="text-lg">{module.icon}</span>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold">{moduleTasks.length}</div>
-                          <p className="text-xs text-gray-500 truncate">{module.name}</p>
-                        </div>
+    {/* Module Stats */}
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+    >
+      {MODULES.map((module, index) => {
+        const moduleTasks = tasks.filter(t => t.module_name === module.name)
+        const completedTasks = moduleTasks.filter(t => t.status === 'done').length
+        const completionRate = moduleTasks.length > 0 ? Math.round((completedTasks / moduleTasks.length) * 100) : 0
+        
+        return (
+          <motion.div
+            key={module.id}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0, transition: { delay: index * 0.1 } }
+            }}
+          >
+            <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-blue-500/10 hover:shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+              {/* Gradient border top */}
+              <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${module.color}`} />
+              
+              {/* Background effects */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5"></div>
+              
+              <CardContent className="pt-6 relative z-10">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`h-10 w-10 rounded-lg bg-gradient-to-r ${module.color} flex items-center justify-center border ${module.color}/30`}>
+                        <span className="text-lg">{module.icon}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 flex-1 bg-gray-200/50 dark:bg-gray-700/50 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full bg-gradient-to-r ${module.color} transition-all duration-1000`}
-                            style={{ width: `${completionRate}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                          {completionRate}%
-                        </span>
+                      <div>
+                        <div className="text-2xl font-bold text-white">{moduleTasks.length}</div>
+                        <p className="text-xs text-gray-400 truncate">{module.name}</p>
                       </div>
                     </div>
-                    <Badge className={cn(
-                      "text-xs",
-                      moduleTasks.length === 0 ? "bg-gray-500/20 text-gray-600" :
-                      completionRate >= 75 ? "bg-green-500/20 text-green-600" :
-                      completionRate >= 50 ? "bg-yellow-500/20 text-yellow-600" :
-                      "bg-red-500/20 text-red-600"
-                    )}>
-                      {moduleTasks.length === 0 ? "No tasks" :
-                       completionRate >= 75 ? "On track" :
-                       completionRate >= 50 ? "Progressing" : "Needs attention"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 flex-1 bg-gray-800/50 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full bg-gradient-to-r ${module.color} transition-all duration-1000`}
+                          style={{ width: `${completionRate}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-400">
+                        {completionRate}%
+                      </span>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )
-        })}
-      </motion.div>
+                  <Badge className={cn(
+                    "text-xs backdrop-blur-sm",
+                    moduleTasks.length === 0 ? "bg-gray-500/30 text-gray-400 border-gray-500/50" :
+                    completionRate >= 75 ? "bg-green-500/30 text-green-400 border-green-500/50" :
+                    completionRate >= 50 ? "bg-yellow-500/30 text-yellow-400 border-yellow-500/50" :
+                    "bg-red-500/30 text-red-400 border-red-500/50"
+                  )}>
+                    {moduleTasks.length === 0 ? "No tasks" :
+                     completionRate >= 75 ? "On track" :
+                     completionRate >= 50 ? "Progressing" : "Needs attention"}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )
+      })}
+    </motion.div>
 
-      {/* Main Content */}
-      <div className="space-y-6">
-        {/* Loading State */}
-        {isLoading ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card className="glass-morphism border-white/20">
-              <CardContent className="py-20">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="relative mb-6">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/30 border-t-primary"></div>
-                    <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full border-4 border-primary/10"></div>
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400">Loading tasks from database...</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Fetching your latest updates</p>
+    {/* Main Content */}
+    <div className="space-y-6">
+      {/* Loading State */}
+      {isLoading ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-blue-500/10">
+            <CardContent className="py-20">
+              <div className="flex flex-col items-center justify-center">
+                <div className="relative mb-6">
+                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500/30 border-t-blue-500"></div>
+                  <div className="absolute inset-0 h-12 w-12 animate-ping rounded-full border-4 border-blue-500/10"></div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ) : filteredTasks.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card className="glass-morphism border-white/20">
-              <CardContent className="py-20 text-center">
-                <div className="max-w-md mx-auto">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 flex items-center justify-center">
-                    <Search className="h-10 w-10 text-blue-500" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">
-                    {searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || moduleFilter !== 'all'
-                      ? "No matching tasks found" 
-                      : "No tasks created yet"}
-                  </h3>
-                  <p className="text-gray-500 dark:text-gray-400 mb-8">
-                    {searchQuery ? "Try adjusting your search terms or filters" : 
-                     "Get started by creating your first task for your team"}
-                  </p>
-                  {searchQuery === "" && statusFilter === "all" && priorityFilter === "all" && moduleFilter === "all" && (
-                    <Button 
-                      onClick={handleCreateNew}
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/20"
-                      size="lg"
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Create Your First Task
-                    </Button>
-                  )}
-                  {(searchQuery !== "" || statusFilter !== "all" || priorityFilter !== "all" || moduleFilter !== "all") && (
-                    <Button 
-                      onClick={clearFilters}
-                      variant="outline"
-                      className="glass-input border-white/20"
-                    >
-                      Clear Filters
-                    </Button>
-                  )}
+                <p className="text-gray-400">Loading tasks from database...</p>
+                <p className="text-sm text-gray-500 mt-2">Fetching your latest updates</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ) : filteredTasks.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-blue-500/10">
+            <CardContent className="py-20 text-center">
+              <div className="max-w-md mx-auto">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+                  <Search className="h-10 w-10 text-blue-400" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ) : viewMode === 'grid' ? (
-          // Grid View
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4"
-          >
-            {renderGridGroups()}
-          </motion.div>
-        ) : (
-          // List View
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card className="glass-morphism border-white/20">
-              <CardContent className="p-0">
-                <div className="divide-y divide-white/10">
-                  {groupedTasks().map((group) => (
-                    <div key={group.moduleName} className="last:border-b-0">
-                      {/* Group Header */}
-                      <div 
-                        className="p-6 cursor-pointer hover:bg-white/5 transition-colors duration-300 border-b border-white/10"
-                        onClick={() => toggleGroupCollapse(group.moduleName)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className={`h-12 w-12 rounded-xl bg-gradient-to-r ${getModuleColor(group.moduleName)} flex items-center justify-center`}>
-                              <span className="text-xl">{getModuleIcon(group.moduleName)}</span>
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-lg">{group.moduleName}</h3>
-                              <p className="text-sm text-gray-500">
-                                {group.tasks.length} tasks • 
-                                <span className="ml-2">
-                                  {group.tasks.filter(t => t.status === 'done').length} completed
-                                </span>
-                              </p>
-                            </div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || moduleFilter !== 'all'
+                    ? "No matching tasks found" 
+                    : "No tasks created yet"}
+                </h3>
+                <p className="text-gray-400 mb-8">
+                  {searchQuery ? "Try adjusting your search terms or filters" : 
+                   "Get started by creating your first task for your team"}
+                </p>
+                {searchQuery === "" && statusFilter === "all" && priorityFilter === "all" && moduleFilter === "all" && (
+                  <Button 
+                    onClick={handleCreateNew}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-lg shadow-blue-500/30 text-white"
+                    size="lg"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Create Your First Task
+                  </Button>
+                )}
+                {(searchQuery !== "" || statusFilter !== "all" || priorityFilter !== "all" || moduleFilter !== "all") && (
+                  <Button 
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 text-white hover:text-white"
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ) : viewMode === 'grid' ? (
+        // Grid View
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4"
+        >
+          {renderGridGroups()}
+        </motion.div>
+      ) : (
+        // List View
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-blue-500/10">
+            <CardContent className="p-0">
+              <div className="divide-y divide-gray-800/50">
+                {groupedTasks().map((group) => (
+                  <div key={group.moduleName} className="last:border-b-0">
+                    {/* Group Header */}
+                    <div 
+                      className="p-6 cursor-pointer hover:bg-gradient-to-r hover:from-blue-500/10 hover:to-cyan-500/10 transition-colors duration-300 border-b border-gray-800/30"
+                      onClick={() => toggleGroupCollapse(group.moduleName)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={`h-12 w-12 rounded-xl bg-gradient-to-r ${getModuleColor(group.moduleName)} flex items-center justify-center border ${getModuleColor(group.moduleName)}/30`}>
+                            <span className="text-xl">{getModuleIcon(group.moduleName)}</span>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <Badge className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600">
-                              {((group.tasks.filter(t => t.status === 'done').length / group.tasks.length) * 100).toFixed(0)}%
-                            </Badge>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-8 w-8 p-0 rounded-full"
-                            >
-                              {group.isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-                            </Button>
+                          <div>
+                            <h3 className="font-bold text-lg text-white">{group.moduleName}</h3>
+                            <p className="text-sm text-gray-400">
+                              {group.tasks.length} tasks • 
+                              <span className="ml-2">
+                                {group.tasks.filter(t => t.status === 'done').length} completed
+                              </span>
+                            </p>
                           </div>
                         </div>
+                        <div className="flex items-center gap-4">
+                          <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border-blue-500/30">
+                            {((group.tasks.filter(t => t.status === 'done').length / group.tasks.length) * 100).toFixed(0)}%
+                          </Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 rounded-full bg-gradient-to-r from-gray-800/50 to-black/50 border-gray-700/50 text-gray-400 hover:text-white"
+                          >
+                            {group.isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                          </Button>
+                        </div>
                       </div>
-                      
-                      {/* Group Content - Collapsible */}
-                      {!group.isCollapsed && (
-                        <div className="divide-y divide-white/10">
-                          {group.tasks.map((task) => {
-                            const isAssignedToMe = task.assigned_to === user?.id
-                            const isCreatedByMe = task.created_by === user?.id
-                            const canEdit = task.canEdit || user?.role === 'admin' || isAssignedToMe || isCreatedByMe
-                            
-                            return (
-                              <div 
-                                key={task.id}
-                                className="p-6 hover:bg-white/5 transition-colors duration-300 group"
-                              >
-                                <div className="flex items-start gap-4">
-                                  {/* Priority Indicator */}
-                                  <div className={`w-2 h-full rounded-full ${getPriorityColor(task.priority)}`} />
-                                  
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-3 mb-2">
-                                      <h4 className="font-semibold text-lg group-hover:text-blue-600 transition-colors">
-                                        {task.title}
-                                      </h4>
-                                      {isAssignedToMe && (
-                                        <Badge className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 border-blue-500/20">
-                                          Assigned to you
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    
-                                    <div className="mb-4 max-h-[48px] overflow-hidden">
-                                      {renderDescription(task.description)}
-                                    </div>
-                                    
-                                    <div className="flex flex-wrap items-center gap-4">
-                                      <div className="flex items-center gap-2">
-                                        <Users className="h-4 w-4 text-gray-400" />
-                                        <span className="text-sm">{task.assignee_name || "Unassigned"}</span>
-                                      </div>
-                                      {task.due_date && (
-                                        <div className="flex items-center gap-2">
-                                          <Calendar className="h-4 w-4 text-gray-400" />
-                                          <span className={`text-sm ${new Date(task.due_date) < new Date() ? 'text-red-600 font-medium' : ''}`}>
-                                            Due: {new Date(task.due_date).toLocaleDateString()}
-                                          </span>
-                                        </div>
-                                      )}
-                                      <Badge className={statusColors[task.status]}>
-                                        {getStatusIcon(task.status)}
-                                        {getStatusDisplay(task.status)}
+                    </div>
+                    
+                    {/* Group Content - Collapsible */}
+                    {!group.isCollapsed && (
+                      <div className="divide-y divide-gray-800/30">
+                        {group.tasks.map((task) => {
+                          const isAssignedToMe = task.assigned_to === user?.id
+                          const isCreatedByMe = task.created_by === user?.id
+                          const canEdit = task.canEdit || user?.role === 'admin' || isAssignedToMe || isCreatedByMe
+                          
+                          return (
+                            <div 
+                              key={task.id}
+                              className="p-6 hover:bg-gradient-to-r hover:from-blue-500/10 hover:to-cyan-500/10 transition-colors duration-300 group"
+                            >
+                              <div className="flex items-start gap-4">
+                                {/* Priority Indicator */}
+                                <div className={`w-2 h-full rounded-full ${getPriorityColor(task.priority)}`} />
+                                
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <h4 className="font-semibold text-lg group-hover:text-blue-400 transition-colors text-white">
+                                      {task.title}
+                                    </h4>
+                                    {isAssignedToMe && (
+                                      <Badge className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border-blue-500/30">
+                                        Assigned to you
                                       </Badge>
-                                    </div>
+                                    )}
                                   </div>
                                   
-                                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    {renderTaskActions(task, canEdit)}
+                                  <div className="mb-4 max-h-[48px] overflow-hidden">
+                                    {renderDescription(task.description)}
+                                  </div>
+                                  
+                                  <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                      <Users className="h-4 w-4 text-gray-400" />
+                                      <span className="text-sm text-gray-300">{task.assignee_name || "Unassigned"}</span>
+                                    </div>
+                                    {task.due_date && (
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-gray-400" />
+                                        <span className={`text-sm ${new Date(task.due_date) < new Date() ? 'text-red-400 font-medium' : 'text-gray-300'}`}>
+                                          Due: {new Date(task.due_date).toLocaleDateString()}
+                                        </span>
+                                      </div>
+                                    )}
+                                    <Badge className={`${statusColors[task.status]} text-white`}>
+                                      {getStatusIcon(task.status)}
+                                      {getStatusDisplay(task.status)}
+                                    </Badge>
                                   </div>
                                 </div>
+                                
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  {renderTaskActions(task, canEdit)}
+                                </div>
                               </div>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Enhanced Task Dialog */}
-      <TaskDialog 
-        open={dialogOpen} 
-        onOpenChange={setDialogOpen} 
-        onSave={handleSave} 
-        task={editingTask}
-        isSubmitting={isSubmitting}
-      />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
     </div>
-  )
+
+    {/* Enhanced Task Dialog */}
+    <TaskDialog 
+      open={dialogOpen} 
+      onOpenChange={setDialogOpen} 
+      onSave={handleSave} 
+      task={editingTask}
+      isSubmitting={isSubmitting}
+    />
+  </div>
+)
 }
