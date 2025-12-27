@@ -128,41 +128,65 @@ export default function RegisterPage() {
     return "Strong"
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-purple-900/30 p-4 overflow-hidden relative">
-      {/* Background particles */}
-      <div className="particles-container absolute inset-0 w-full h-full z-0"></div>
+return (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-purple-900/30 p-4 overflow-hidden relative">
+    {/* Enhanced background elements */}
+    <div className="fixed inset-0 overflow-hidden -z-10">
+      {/* Main gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-purple-900/50"></div>
       
-      {/* Animated background gradient */}
+      {/* Background particles */}
+      <div className="particles-container absolute inset-0 w-full h-full z-0">
+        {/* This will be populated by the useEffect particles */}
+      </div>
+      
+      {/* Animated gradient overlays */}
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 animate-gradient-x"></div>
       
-      {/* Floating elements */}
-      <div className="absolute top-1/3 left-1/5 w-72 h-72 bg-purple-500/15 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-1/3 right-1/5 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+      {/* Floating gradient orbs */}
+      <div className="absolute top-1/3 left-1/5 w-72 h-72 bg-gradient-to-br from-purple-500/15 via-pink-500/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-1/3 right-1/5 w-80 h-80 bg-gradient-to-br from-pink-500/10 via-purple-500/5 to-transparent rounded-full blur-3xl animate-pulse delay-700"></div>
       
-      <div className="relative z-10 w-full max-w-xl form-container">
-        {/* Success animation */}
-        <div className="success-animation absolute -top-20 left-1/2 transform -translate-x-1/2 opacity-0">
-          <div className="relative">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 animate-pulse">
-              <CheckCircle className="w-10 h-10 text-white" />
-            </div>
-            <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400 animate-spin" />
+      {/* Subtle grid texture */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f12_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f12_1px,transparent_1px)] bg-[size:14px_24px] opacity-30"></div>
+      
+      {/* Glowing particles */}
+      <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-purple-400 rounded-full animate-ping"></div>
+      <div className="absolute top-1/2 right-1/3 w-1 h-1 bg-pink-300 rounded-full animate-ping delay-300"></div>
+      <div className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-cyan-300 rounded-full animate-ping delay-600"></div>
+    </div>
+    
+    <div className="relative z-10 w-full max-w-xl form-container">
+      {/* Success animation */}
+      <div className="success-animation absolute -top-20 left-1/2 transform -translate-x-1/2 opacity-0">
+        <div className="relative">
+          <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 animate-pulse">
+            <CheckCircle className="w-10 h-10 text-white" />
           </div>
+          <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400 animate-spin" />
         </div>
+      </div>
 
-        <Card className="w-full glass-morphism backdrop-blur-lg border-white/20 shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20 transition-all duration-500 transform hover:-translate-y-1">
+      <Card className="w-full bg-gradient-to-br from-gray-900/90 via-black/90 to-purple-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-500 transform hover:-translate-y-1 relative overflow-hidden">
+        {/* Card gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-cyan-500/5"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent"></div>
+        
+        <div className="relative z-10">
           <CardHeader className="space-y-1 pb-6">
             <div className="flex justify-center mb-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-                  <Users className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 relative overflow-hidden">
+                  {/* Icon background gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500"></div>
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent"></div>
+                  <Users className="w-8 h-8 text-white relative z-10" />
                 </div>
                 <Sparkles className="absolute -top-2 -right-2 w-5 h-5 text-yellow-400 animate-pulse" />
               </div>
             </div>
             
-            <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-purple-400 to-pink-300 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-purple-300 via-pink-300 to-purple-400 bg-clip-text text-transparent">
               Join Devvoltz
             </CardTitle>
             <CardDescription className="text-center text-gray-300/80 pt-2">
@@ -196,7 +220,7 @@ export default function RegisterPage() {
                       onChange={(e) => setName(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="glass-input bg-white/5 border-gray-600/50 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/30 pl-10 py-6 text-white placeholder:text-gray-400 transition-all duration-300"
+                      className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/30 pl-10 py-6 text-white placeholder:text-gray-400 transition-all duration-300 hover:from-gray-800/60 hover:to-black/60"
                     />
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
@@ -221,7 +245,7 @@ export default function RegisterPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="glass-input bg-white/5 border-gray-600/50 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/30 pl-10 py-6 text-white placeholder:text-gray-400 transition-all duration-300"
+                      className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/30 pl-10 py-6 text-white placeholder:text-gray-400 transition-all duration-300 hover:from-gray-800/60 hover:to-black/60"
                     />
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
@@ -251,7 +275,7 @@ export default function RegisterPage() {
                       }}
                       required
                       disabled={isLoading}
-                      className="glass-input bg-white/5 border-gray-600/50 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/30 pl-10 py-6 text-white placeholder:text-gray-400 transition-all duration-300"
+                      className="bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/30 pl-10 py-6 text-white placeholder:text-gray-400 transition-all duration-300 hover:from-gray-800/60 hover:to-black/60"
                     />
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
@@ -271,7 +295,7 @@ export default function RegisterPage() {
                           {getStrengthText()}
                         </span>
                       </div>
-                      <div className="h-2 bg-gray-700/50 rounded-full overflow-hidden">
+                      <div className="h-2 bg-gray-800/50 rounded-full overflow-hidden">
                         <div 
                           className={`h-full ${getStrengthColor()} transition-all duration-500 ease-out`}
                           style={{ width: `${(passwordStrength / 4) * 100}%` }}
@@ -330,7 +354,7 @@ export default function RegisterPage() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                       disabled={isLoading}
-                      className={`glass-input bg-white/5 border-gray-600/50 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/30 pl-10 py-6 text-white placeholder:text-gray-400 transition-all duration-300 ${
+                      className={`bg-gradient-to-r from-gray-900/60 to-black/60 backdrop-blur-sm border-gray-700/50 focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/30 pl-10 py-6 text-white placeholder:text-gray-400 transition-all duration-300 hover:from-gray-800/60 hover:to-black/60 ${
                         confirmPassword && password && confirmPassword !== password ? 'border-red-400/50' : ''
                       }`}
                     />
@@ -346,7 +370,7 @@ export default function RegisterPage() {
               {error && (
                 <Alert 
                   variant="destructive"
-                  className="glass-morphism bg-red-500/10 border-red-500/30 animate-fade-in"
+                  className="bg-gradient-to-r from-red-900/20 to-red-900/10 backdrop-blur-sm border-red-700/30 animate-fade-in"
                 >
                   <AlertDescription className="flex items-center gap-2 text-red-300">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -359,7 +383,7 @@ export default function RegisterPage() {
 
               {success && (
                 <Alert 
-                  className="glass-morphism bg-green-500/10 border-green-500/30 animate-fade-in"
+                  className="bg-gradient-to-r from-green-900/20 to-emerald-900/10 backdrop-blur-sm border-green-700/30 animate-fade-in"
                 >
                   <AlertDescription className="flex items-center gap-2 text-green-300">
                     <CheckCircle className="w-4 h-4" />
@@ -371,16 +395,20 @@ export default function RegisterPage() {
               {/* Submit Button */}
               <Button 
                 type="submit" 
-                className="w-full py-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] mt-6"
+                className="w-full py-6 bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-700 hover:via-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] mt-6 relative overflow-hidden group"
                 disabled={isLoading}
               >
+                {/* Button gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
                 {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 relative z-10">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Creating your account...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 relative z-10">
                     <span>Create Account</span>
                     <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
@@ -388,7 +416,7 @@ export default function RegisterPage() {
               </Button>
 
               {/* Login Link */}
-              <div className="text-center text-sm pt-4 border-t border-gray-700/50">
+              <div className="text-center text-sm pt-4 border-t border-gray-800/50">
                 <p className="text-gray-400">
                   Already have an account?{" "}
                   <Link 
@@ -430,8 +458,9 @@ export default function RegisterPage() {
               </div>
             </form>
           </CardContent>
-        </Card>
-      </div>
+        </div>
+      </Card>
     </div>
-  )
+  </div>
+)
 }
