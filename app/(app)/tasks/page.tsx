@@ -83,81 +83,7 @@ type ViewMode = 'grid' | 'list'
 
 // Predefined modules with weekly tasks
 const MODULES = [
-  {
-    id: "auth",
-    name: "Authentication Module",
-    color: "from-red-500 to-rose-500",
-    icon: "🔐",
-    tasks: [
-      "User Registration API",
-      "Login & JWT Implementation",
-      "Password Reset Flow",
-      "Email Verification",
-      "Social Login Integration",
-      "Role-based Access Control",
-      "Session Management"
-    ]
-  },
-  {
-    id: "dashboard",
-    name: "Dashboard Module",
-    color: "from-blue-500 to-cyan-500",
-    icon: "📊",
-    tasks: [
-      "Dashboard Layout Design",
-      "Statistics Widgets",
-      "Recent Activity Feed",
-      "Charts & Graphs Integration",
-      "Quick Actions Panel",
-      "Notifications Center",
-      "Search & Filter System"
-    ]
-  },
-  {
-    id: "tasks",
-    name: "Tasks Module",
-    color: "from-green-500 to-emerald-500",
-    icon: "✅",
-    tasks: [
-      "Task Creation Form",
-      "Task List Display",
-      "Task Filtering & Sorting",
-      "Task Details View",
-      "Task Comments System",
-      "Task Attachments",
-      "Task History & Audit"
-    ]
-  },
-  {
-    id: "projects",
-    name: "Projects Module",
-    color: "from-purple-500 to-pink-500",
-    icon: "📁",
-    tasks: [
-      "Project Creation",
-      "Project Board View",
-      "Project Timeline",
-      "Team Management",
-      "Project Analytics",
-      "Document Management",
-      "Project Settings"
-    ]
-  },
-  {
-    id: "reports",
-    name: "Reports Module",
-    color: "from-orange-500 to-amber-500",
-    icon: "📈",
-    tasks: [
-      "Report Generation",
-      "Data Export (PDF/Excel)",
-      "Report Templates",
-      "Scheduled Reports",
-      "Report Sharing",
-      "Report Analytics",
-      "Custom Report Builder"
-    ]
-  }
+  { name: "Development", color: "from-blue-500 to-cyan-500", icon: "💻" },
 ]
 
 // Interface for grouped tasks
@@ -1301,67 +1227,7 @@ return (
       animate="show"
       className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
     >
-      {MODULES.map((module, index) => {
-        const moduleTasks = tasks.filter(t => t.module_name === module.name)
-        const completedTasks = moduleTasks.filter(t => t.status === 'done').length
-        const completionRate = moduleTasks.length > 0 ? Math.round((completedTasks / moduleTasks.length) * 100) : 0
-        
-        return (
-          <motion.div
-            key={module.id}
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              show: { opacity: 1, y: 0, transition: { delay: index * 0.1 } }
-            }}
-          >
-            <Card className="bg-gradient-to-br from-gray-900/80 via-black/80 to-blue-900/40 backdrop-blur-xl border-white/20 shadow-2xl shadow-blue-500/10 hover:shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-              {/* Gradient border top */}
-              <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${module.color}`} />
-              
-              {/* Background effects */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5"></div>
-              
-              <CardContent className="pt-6 relative z-10">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`h-10 w-10 rounded-lg bg-gradient-to-r ${module.color} flex items-center justify-center border ${module.color}/30`}>
-                        <span className="text-lg">{module.icon}</span>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-white">{moduleTasks.length}</div>
-                        <p className="text-xs text-gray-400 truncate">{module.name}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 flex-1 bg-gray-800/50 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full bg-gradient-to-r ${module.color} transition-all duration-1000`}
-                          style={{ width: `${completionRate}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-medium text-gray-400">
-                        {completionRate}%
-                      </span>
-                    </div>
-                  </div>
-                  <Badge className={cn(
-                    "text-xs backdrop-blur-sm",
-                    moduleTasks.length === 0 ? "bg-gray-500/30 text-gray-400 border-gray-500/50" :
-                    completionRate >= 75 ? "bg-green-500/30 text-green-400 border-green-500/50" :
-                    completionRate >= 50 ? "bg-yellow-500/30 text-yellow-400 border-yellow-500/50" :
-                    "bg-red-500/30 text-red-400 border-red-500/50"
-                  )}>
-                    {moduleTasks.length === 0 ? "No tasks" :
-                     completionRate >= 75 ? "On track" :
-                     completionRate >= 50 ? "Progressing" : "Needs attention"}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )
-      })}
+    
     </motion.div>
 
     {/* Main Content */}
