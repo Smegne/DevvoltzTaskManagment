@@ -28,7 +28,8 @@ export default function RegisterPage() {
     lowercase: false,
     number: false,
   })
-  const { register } = useRouter()
+  const router = useRouter()
+  const { register } = useAuth()
 
   const checkPasswordStrength = (pass: string) => {
     const criteria = {
