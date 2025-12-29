@@ -38,10 +38,12 @@ import {
   CheckCheck,
   Pause,
   RefreshCw,
-  ArrowUpDown
+  ArrowUpDown,
+  Eye  // ADDED: Import Eye icon
 } from "lucide-react"
 import Link from "next/link"
 import { TaskDialog } from "@/components/task-dialog"
+import TaskViewModal from "@/components/task-view-modal"  // ADDED: Import TaskViewModal
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
@@ -113,6 +115,26 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState<"due_date" | "priority" | "created_at">("due_date")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  
+  // ADDED: States for view modal
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [viewingTask, setViewingTask] = useState<DatabaseTask | null>(null)
+
+  // ADDED: Function to open task view modal
+  const handleViewTask = (task: DatabaseTask) => {
+    setViewingTask(task)
+    setViewModalOpen(true)
+  }
+
+  // ADDED: Function to close view modal
+  const handleCloseViewModal = (shouldEdit?: boolean, taskToEdit?: DatabaseTask) => {
+    setViewModalOpen(false)
+    if (shouldEdit && taskToEdit) {
+      setEditingTask(taskToEdit)
+      setDialogOpen(true)
+    }
+    setViewingTask(null)
+  }
 
   // Fetch tasks from API
   useEffect(() => {
@@ -614,6 +636,18 @@ export default function TasksPage() {
           <Edit className="h-4 w-4" />
         </Button>
 
+        {/* View Details Button for editors */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleViewTask(task)}
+          disabled={isDeleting || isUpdating}
+          className="h-8 w-8 p-0 rounded-full hover:bg-green-500/10 hover:text-green-500 transition-all duration-300"
+          title="View details"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+
         {/* Delete Button */}
         <Button 
           variant="ghost" 
@@ -767,10 +801,14 @@ export default function TasksPage() {
                 {canEdit ? (
                   renderTaskActions(task, canEdit)
                 ) : (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/tasks/view/${task.id}`}>
-                      View Details
-                    </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleViewTask(task)}
+                    className="h-8 px-3"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    View Details
                   </Button>
                 )}
               </div>
@@ -1380,7 +1418,19 @@ export default function TasksPage() {
                                   </div>
                                   
                                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    {renderTaskActions(task, canEdit)}
+                                    {canEdit ? (
+                                      renderTaskActions(task, canEdit)
+                                    ) : (
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => handleViewTask(task)}
+                                        className="h-8 px-3"
+                                      >
+                                        <Eye className="h-3 w-3 mr-1" />
+                                        View Details
+                                      </Button>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -1396,6 +1446,19 @@ export default function TasksPage() {
           </motion.div>
         )}
       </div>
+
+      {/* Task View Modal */}
+      <TaskViewModal 
+        task={viewingTask}
+        open={viewModalOpen}
+        onOpenChange={(open) => {
+          if (!open) handleCloseViewModal()
+        }}
+        onEditRequest={(task) => {
+          handleCloseViewModal(true, task)
+        }}
+        user={user}
+      />
 
       {/* Enhanced Task Dialog */}
       <TaskDialog 

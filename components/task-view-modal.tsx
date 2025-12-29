@@ -2,18 +2,23 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Users, FolderKanban, Clock, AlertCircle, CheckCircle2, Play, PauseCircle, X } from "lucide-react"
+import { Calendar, Users, FolderKanban, Clock, AlertCircle, CheckCircle2, Play, PauseCircle, X, Edit, CheckCircle, Eye, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DatabaseTask } from "@/app/(app)/dashboard/page"
+import { useState } from "react"
+import { toast } from "sonner"
 
 interface TaskViewModalProps {
   task: DatabaseTask | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onEditRequest?: (task: DatabaseTask) => void
   user: any
 }
 
-export default function TaskViewModal({ task, open, onOpenChange, user }: TaskViewModalProps) {
+export default function TaskViewModal({ task, open, onOpenChange, onEditRequest, user }: TaskViewModalProps) {
+  const [isUpdating, setIsUpdating] = useState(false)
+  
   if (!task) return null
 
   // Function to render HTML description safely with rich text formatting
@@ -33,6 +38,39 @@ export default function TaskViewModal({ task, open, onOpenChange, user }: TaskVi
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
     )
+  }
+
+  // Handle status update
+  const handleStatusUpdate = async (newStatus: DatabaseTask['status']) => {
+    try {
+      setIsUpdating(true)
+      const token = localStorage.getItem('auth_token')
+      
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        toast.success(`Task status updated to ${getStatusDisplay(newStatus)}`)
+        // Update the task locally
+        task.status = newStatus
+        task.updated_at = new Date().toISOString()
+      } else {
+        toast.error(data.error || 'Failed to update task status')
+      }
+    } catch (error: any) {
+      console.error('Status update error:', error)
+      toast.error(error.message || 'Failed to update task status')
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   // Status display mapping
@@ -56,9 +94,9 @@ export default function TaskViewModal({ task, open, onOpenChange, user }: TaskVi
   }
 
   const priorityColors: Record<string, string> = {
-    'low': "bg-green-100 text-green-800 border-green-200",
-    'medium': "bg-yellow-100 text-yellow-800 border-yellow-200",
-    'high': "bg-red-100 text-red-800 border-red-200",
+    'low': "bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-300",
+    'medium': "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-300",
+    'high': "bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-300",
   }
 
   const priorityDisplay: Record<string, string> = {
@@ -81,9 +119,14 @@ export default function TaskViewModal({ task, open, onOpenChange, user }: TaskVi
     }
   }
 
+  // Check if user can edit this task
+  const canEdit = task.canEdit || user?.role === 'admin' || 
+                  task.assigned_to === user?.id || 
+                  task.created_by === user?.id
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span className="text-xl">Task Details</span>
@@ -115,6 +158,60 @@ export default function TaskViewModal({ task, open, onOpenChange, user }: TaskVi
                 </Badge>
               </div>
             </div>
+
+            {/* Quick Actions */}
+            {canEdit && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => onEditRequest && onEditRequest(task)}
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit Task
+                </Button>
+                
+                {task.status !== 'done' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2 bg-green-50 hover:bg-green-100 text-green-700"
+                    onClick={() => handleStatusUpdate('done')}
+                    disabled={isUpdating}
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Mark as Done
+                  </Button>
+                )}
+                
+                {task.status === 'todo' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700"
+                    onClick={() => handleStatusUpdate('in_progress')}
+                    disabled={isUpdating}
+                  >
+                    <Play className="h-4 w-4" />
+                    Start Task
+                  </Button>
+                )}
+                
+                {task.status === 'in_progress' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2 bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
+                    onClick={() => handleStatusUpdate('paused')}
+                    disabled={isUpdating}
+                  >
+                    <PauseCircle className="h-4 w-4" />
+                    Pause Task
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* Task Metadata Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
@@ -232,11 +329,34 @@ export default function TaskViewModal({ task, open, onOpenChange, user }: TaskVi
                 </Badge>
               </div>
             )}
+            
+            {task.tags && task.tags.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-semibold">Tags</h4>
+                <div className="flex flex-wrap gap-1">
+                  {task.tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {task.estimated_hours && (
+              <div className="space-y-2">
+                <h4 className="font-semibold">Estimated Hours</h4>
+                <p className="text-muted-foreground">{task.estimated_hours} hours</p>
+              </div>
+            )}
           </div>
 
           {/* Close Button */}
           <div className="flex justify-end pt-4 border-t">
-            <Button onClick={() => onOpenChange(false)}>
+            <Button 
+              onClick={() => onOpenChange(false)}
+              className="min-w-[100px]"
+            >
               Close
             </Button>
           </div>
