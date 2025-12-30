@@ -3,16 +3,76 @@ import pool from '@/lib/db/connection';
 import { authenticate } from '@/lib/auth';
 import { successResponse, errorResponse, serverErrorResponse } from '@/lib/api-response';
 
-// Helper to check if user can edit task
-function canEditTask(task: any, userId: number, userRole: string): boolean {
-  // Admin can edit all tasks
-  if (userRole === 'admin') return true;
+// Helper function to generate module name
+function generateModuleName(user: any, month?: string, week?: string, subject?: string): string {
+  let finalMonth = month;
+  let finalWeek = week;
   
-  // Users can edit tasks they created or are assigned to
-  return task.created_by === userId || task.assigned_to === userId;
+  if (!finalMonth || !finalWeek) {
+    const now = new Date();
+    finalMonth = now.toLocaleString('en-US', { month: 'long' });
+    
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const firstDayWeekday = firstDay.getDay() || 7;
+    const offsetDate = now.getDate() + firstDayWeekday - 1;
+    const weekNumber = Math.ceil(offsetDate / 7);
+    finalWeek = `Week${weekNumber}`;
+  }
+
+  const userName = (user.full_name || user.name || user.email || 'user')
+    .replace(/\s+/g, '_')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '');
+  
+  const moduleSubject = subject || 'project';
+  
+  return `${finalMonth}-${finalWeek}-${userName}-${moduleSubject}`;
 }
 
-// GET single task
+// Helper to check if user can edit task
+function canEditTask(task: any, userId: number, userRole: string): boolean {
+  if (userRole === 'admin') return true;
+  return task.created_by === userId || task.assigned_to === userId;
+}
+// Helper function to handle assignment for admin vs regular users
+function handleAssignment(auth: any, assigned_to: any, existingTask?: any) {
+  let assignedTo = null;
+  
+  if (auth.role === 'admin') {
+    // Admin can assign to anyone
+    if (assigned_to === "current") {
+      assignedTo = auth.userId;
+    } else if (assigned_to === "unassigned" || assigned_to === "null" || assigned_to === "") {
+      assignedTo = null;
+    } else if (assigned_to) {
+      const parsedId = parseInt(assigned_to);
+      if (isNaN(parsedId)) {
+        throw new Error('Invalid assignee ID');
+      }
+      assignedTo = parsedId;
+    }
+  } else {
+    // Regular users can only assign to themselves or unassign
+    if (assigned_to === "current" || assigned_to === auth.userId?.toString()) {
+      assignedTo = auth.userId;
+    } else if (assigned_to === "unassigned" || assigned_to === "null" || assigned_to === "") {
+      assignedTo = null;
+    } else if (assigned_to) {
+      // Check if they're trying to reassign their own task
+      if (!existingTask || existingTask.created_by !== auth.userId) {
+        throw new Error('You can only reassign your own tasks');
+      }
+      const parsedId = parseInt(assigned_to);
+      if (!isNaN(parsedId) && parsedId !== auth.userId) {
+        throw new Error('You can only assign tasks to yourself or unassign');
+      }
+      assignedTo = auth.userId;
+    }
+  }
+  
+  return assignedTo;
+}
+// GET single task - FIXED
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -36,7 +96,9 @@ export async function GET(
         `SELECT 
           t.*,
           u_creator.name as creator_name,
+          u_creator.email as creator_email,
           u_assignee.name as assignee_name,
+          u_assignee.email as assignee_email,
           p.name as project_name
         FROM tasks t
         LEFT JOIN users u_creator ON t.created_by = u_creator.id
@@ -52,6 +114,11 @@ export async function GET(
 
       const task = tasks[0];
       
+      // Check permission
+      if (!canEditTask(task, auth.userId, auth.role)) {
+        return errorResponse('Permission denied', 'You cannot access this task', 403);
+      }
+      
       // Parse JSON tags
       if (task.tags && typeof task.tags === 'string') {
         try {
@@ -59,6 +126,14 @@ export async function GET(
         } catch (e) {
           task.tags = [];
         }
+      }
+      
+      // Add user display names
+      if (!task.creator_name && task.creator_email) {
+        task.creator_name = task.creator_email.split('@')[0];
+      }
+      if (!task.assignee_name && task.assignee_email) {
+        task.assignee_name = task.assignee_email.split('@')[0];
       }
       
       // Add canEdit flag for frontend
@@ -71,96 +146,60 @@ export async function GET(
         task: taskWithPermissions,
       });
 
+    } catch (dbError: any) {
+      console.error('🔴 Database error in GET:', dbError);
+      return errorResponse('Database error', dbError.message, 500);
     } finally {
       connection.release();
     }
 
   } catch (error: any) {
+    console.error('🔴 GET /api/tasks/[id] error:', error);
     return serverErrorResponse(error);
   }
 }
 
-// PUT update task (with permission check)
+// PUT update task - SIMPLIFIED VERSION
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   
-  console.log('🔵 [API PUT] Request received at:', new Date().toISOString());
-  console.log('🔵 Task ID from params:', id);
-  console.log('🔵 Request URL:', request.url);
-  
   try {
     const auth = await authenticate(request);
-    console.log('🔵 Auth result:', {
-      userId: auth?.userId,
-      role: auth?.role,
-      email: auth?.email,
-      isValid: !!auth
-    });
-    
     if (!auth) {
-      console.log('🔴 Authentication failed - no valid token');
       return errorResponse('Authentication required', 'No valid token', 401);
     }
 
     const taskId = parseInt(id);
-    console.log('🔵 Parsed Task ID:', taskId, 'Is NaN?', isNaN(taskId));
-    
     if (isNaN(taskId)) {
       return errorResponse('Invalid task ID', 'ID must be a number', 400);
     }
 
     const body = await request.json();
-    console.log('🔵 Request body received:', body);
-    console.log('🔵 Status being updated to:', body.status);
-    console.log('🔵 Is status valid?', ['todo', 'in_progress', 'review', 'done', 'paused'].includes(body.status));
+    console.log('🔵 Updating task:', taskId, 'with data:', body);
 
     const connection = await pool.getConnection();
     try {
-      // Check if task exists and get current data
-      console.log('🔵 Querying database for task ID:', taskId);
+      // Check if task exists
       const [existingTasks]: any = await connection.query(
         'SELECT * FROM tasks WHERE id = ?',
         [taskId]
       );
 
-      console.log('🔵 Database query result - tasks found:', existingTasks.length);
-      
-      if (existingTasks.length > 0) {
-        console.log('🔵 Task data:', {
-          id: existingTasks[0].id,
-          title: existingTasks[0].title,
-          status: existingTasks[0].status,
-          created_by: existingTasks[0].created_by,
-          assigned_to: existingTasks[0].assigned_to
-        });
-      }
-
       if (existingTasks.length === 0) {
-        console.log('🔴 Task not found in database');
         return errorResponse('Task not found', 'No task with that ID', 404);
       }
 
       const task = existingTasks[0];
 
       // Check permission to edit
-      const canEdit = canEditTask(task, auth.userId, auth.role);
-      console.log('🔵 Permission check:', {
-        userId: auth.userId,
-        role: auth.role,
-        taskCreator: task.created_by,
-        taskAssignee: task.assigned_to,
-        canEdit: canEdit
-      });
-      
-      if (!canEdit) {
-        console.log('🔴 Permission denied for user to edit this task');
+      if (!canEditTask(task, auth.userId, auth.role)) {
         return errorResponse('Permission denied', 'You can only edit your own tasks', 403);
       }
 
-      // Build update query with new fields
+      // Build update query
       const updates: string[] = [];
       const values: any[] = [];
 
@@ -177,11 +216,8 @@ export async function PUT(
         tags
       } = body;
 
-      // Validate and add updates for each field
+      // Add updates for each field
       if (title !== undefined) {
-        if (typeof title !== 'string' || title.trim().length === 0) {
-          return errorResponse('Invalid title', 'Title must be a non-empty string', 400);
-        }
         updates.push('title = ?');
         values.push(title.trim());
       }
@@ -192,21 +228,21 @@ export async function PUT(
       }
       
       if (module_name !== undefined) {
+        let finalModuleName = module_name;
+        if (!finalModuleName || finalModuleName.trim() === '') {
+          finalModuleName = generateModuleName(auth);
+        }
         updates.push('module_name = ?');
-        values.push(module_name || null);
+        values.push(finalModuleName);
       }
       
       if (status !== undefined) {
         const validStatuses = ['todo', 'in_progress', 'review', 'done', 'paused'];
-        console.log('🔵 Validating status:', status, 'Valid?', validStatuses.includes(status));
-        
         if (!validStatuses.includes(status)) {
-          console.log('🔴 Invalid status value:', status);
           return errorResponse('Invalid status', `Status must be one of: ${validStatuses.join(', ')}`, 400);
         }
         updates.push('status = ?');
         values.push(status);
-        console.log('🔵 Status update added to query');
       }
       
       if (priority !== undefined) {
@@ -219,89 +255,38 @@ export async function PUT(
       }
       
       if (due_date !== undefined) {
-        // Validate date format if provided
-        if (due_date && due_date !== null && due_date !== '') {
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(due_date)) {
-            return errorResponse('Invalid date format', 'Due date must be in YYYY-MM-DD format or empty', 400);
-          }
-        }
         updates.push('due_date = ?');
         values.push(due_date || null);
       }
       
       if (estimated_hours !== undefined) {
-        if (estimated_hours !== null && estimated_hours !== '') {
-          const hours = parseFloat(estimated_hours);
-          if (isNaN(hours) || hours < 0) {
-            return errorResponse('Invalid estimated hours', 'Estimated hours must be a positive number', 400);
-          }
-          updates.push('estimated_hours = ?');
-          values.push(hours);
-        } else {
-          updates.push('estimated_hours = ?');
-          values.push(null);
-        }
+        updates.push('estimated_hours = ?');
+        values.push(estimated_hours || null);
       }
       
       if (project_id !== undefined) {
-        // Handle project_id: if "none", "null", or empty, set to NULL
         let projectId = null;
         if (project_id && project_id !== "none" && project_id !== "null" && project_id !== "") {
-          const parsedId = parseInt(project_id);
-          if (isNaN(parsedId)) {
-            return errorResponse('Invalid project ID', 'Project ID must be a number', 400);
-          }
-          projectId = parsedId;
+          projectId = parseInt(project_id);
         }
         updates.push('project_id = ?');
         values.push(projectId);
       }
       
       if (assigned_to !== undefined) {
-        // Handle assigned_to based on user role
-        let assignedTo = null;
-        
-        if (auth.role === 'admin') {
-          // Admin can assign to anyone
-          if (assigned_to === "current") {
-            assignedTo = auth.userId;
-          } else if (assigned_to === "unassigned" || assigned_to === "null" || assigned_to === "") {
-            assignedTo = null;
-          } else if (assigned_to) {
-            const parsedId = parseInt(assigned_to);
-            if (isNaN(parsedId)) {
-              return errorResponse('Invalid assignee ID', 'Assignee ID must be a number', 400);
-            }
-            assignedTo = parsedId;
-          }
-        } else {
-          // Regular users can only assign to themselves or unassign
-          if (assigned_to === "current" || assigned_to === auth.userId?.toString()) {
-            assignedTo = auth.userId;
-          } else if (assigned_to === "unassigned" || assigned_to === "null" || assigned_to === "") {
-            assignedTo = null;
-          } else if (assigned_to) {
-            // Users can't assign to others, check if they're trying to assign to someone else
-            const parsedId = parseInt(assigned_to);
-            if (!isNaN(parsedId) && parsedId !== auth.userId) {
-              return errorResponse('Permission denied', 'You can only assign tasks to yourself or unassign', 403);
-            }
-            assignedTo = auth.userId;
-          }
+        let assignedTo = auth.userId;
+        if (assigned_to === "unassigned" || assigned_to === "null" || assigned_to === "") {
+          assignedTo = null;
+        } else if (assigned_to && assigned_to !== "current") {
+          assignedTo = parseInt(assigned_to);
         }
-        
         updates.push('assigned_to = ?');
         values.push(assignedTo);
       }
       
       if (tags !== undefined) {
-        // Convert tags to JSON string
         let tagsJson = null;
         if (tags && Array.isArray(tags) && tags.length > 0) {
-          // Validate tags are strings
-          if (!tags.every(tag => typeof tag === 'string')) {
-            return errorResponse('Invalid tags', 'All tags must be strings', 400);
-          }
           tagsJson = JSON.stringify(tags);
         }
         updates.push('tags = ?');
@@ -309,7 +294,6 @@ export async function PUT(
       }
 
       if (updates.length === 0) {
-        console.log('🔴 No updates provided in request');
         return errorResponse('No updates provided', 'Provide at least one field to update', 400);
       }
 
@@ -319,23 +303,19 @@ export async function PUT(
       // Add task ID for WHERE clause
       values.push(taskId);
 
-      console.log('🔵 Final SQL query parts:');
-      console.log('🔵 Updates:', updates);
-      console.log('🔵 Values:', values);
-      
       const sql = `UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`;
       console.log('🔵 Executing SQL:', sql);
 
-      const [updateResult]: any = await connection.query(sql, values);
-      console.log('🔵 Database update result:', updateResult);
-      console.log('🔵 Rows affected:', updateResult.affectedRows);
+      await connection.query(sql, values);
 
       // Get updated task
       const [updatedTasks]: any = await connection.query(
         `SELECT 
           t.*,
           u_creator.name as creator_name,
+          u_creator.email as creator_email,
           u_assignee.name as assignee_name,
+          u_assignee.email as assignee_email,
           p.name as project_name
         FROM tasks t
         LEFT JOIN users u_creator ON t.created_by = u_creator.id
@@ -344,8 +324,6 @@ export async function PUT(
         WHERE t.id = ?`,
         [taskId]
       );
-
-      console.log('🔵 Updated task fetched:', updatedTasks[0]);
 
       // Parse JSON tags for response
       const updatedTask = updatedTasks[0];
@@ -356,25 +334,33 @@ export async function PUT(
           updatedTask.tags = [];
         }
       }
+      
+      // Add user display names
+      if (!updatedTask.creator_name && updatedTask.creator_email) {
+        updatedTask.creator_name = updatedTask.creator_email.split('@')[0];
+      }
+      if (!updatedTask.assignee_name && updatedTask.assignee_email) {
+        updatedTask.assignee_name = updatedTask.assignee_email.split('@')[0];
+      }
 
       return successResponse('Task updated successfully', {
         task: updatedTask,
       });
 
+    } catch (dbError: any) {
+      console.error('🔴 Database error in PUT:', dbError);
+      return errorResponse('Database error', dbError.message, 500);
     } finally {
       connection.release();
-      console.log('🔵 Database connection released');
     }
 
   } catch (error: any) {
-    console.error('🔴 [API PUT] Error:', error);
-    console.error('🔴 Error message:', error.message);
-    console.error('🔴 Error stack:', error.stack);
+    console.error('🔴 PUT /api/tasks/[id] error:', error);
     return serverErrorResponse(error);
   }
 }
 
-// DELETE task (with permission check)
+// DELETE task
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -415,11 +401,15 @@ export async function DELETE(
 
       return successResponse('Task deleted successfully');
 
+    } catch (dbError: any) {
+      console.error('🔴 Database error in DELETE:', dbError);
+      return errorResponse('Database error', dbError.message, 500);
     } finally {
       connection.release();
     }
 
   } catch (error: any) {
+    console.error('🔴 DELETE /api/tasks/[id] error:', error);
     return serverErrorResponse(error);
   }
 }

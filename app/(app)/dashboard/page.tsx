@@ -3,10 +3,10 @@
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Clock, AlertCircle, TrendingUp, Edit, Eye, FolderKanban, Users, Calendar, Plus, Play, PauseCircle, MoreVertical, Loader2, ChevronRight, Activity, Target, BarChart3, Filter, Zap, Star, Trophy, Bell, Search, Download, Share2 } from "lucide-react"
+import { CheckCircle2, Clock, AlertCircle, TrendingUp, Edit, Eye, FolderKanban, Users, Calendar, Plus, Play, PauseCircle, MoreVertical, Loader2, ChevronRight, Activity, Target, BarChart3, Filter, Zap, Star, Trophy, Bell, Search, Download, Share2, User, ChevronDown, MessageSquare, Briefcase, TrendingDown, Award, CheckCheck, XCircle, FileText, Clock4, FolderOpen, CheckSquare } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "sonner"
 import {
@@ -19,6 +19,8 @@ import {
 import TaskViewModal from "@/components/task-view-modal"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface DatabaseTask {
   id: number
@@ -33,9 +35,14 @@ interface DatabaseTask {
   created_at: string
   updated_at: string
   creator_name?: string
+  creator_email?: string
   assignee_name?: string
+  assignee_email?: string
   project_name?: string
   canEdit?: boolean
+  module_name?: string
+  tags?: string[]
+  estimated_hours?: number
 }
 
 interface Project {
@@ -49,10 +56,26 @@ interface Project {
   user_name?: string
 }
 
+interface TeamMember {
+  id: number
+  name: string
+  email: string
+  role: string
+  taskCount?: number
+  createdCount?: number
+  assignedCount?: number
+  completedCount?: number
+  pendingCount?: number
+  inProgressCount?: number
+  overdueCount?: number
+  lastActive?: string
+}
+
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useAuth()
   const [tasks, setTasks] = useState<DatabaseTask[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<number | null>(null)
   const [viewingTask, setViewingTask] = useState<DatabaseTask | null>(null)
@@ -60,14 +83,18 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "projects">("overview")
+  const [filterUser, setFilterUser] = useState<string>("all")
+  const [filterPriority, setFilterPriority] = useState<string>("all")
+  const [activeTab, setActiveTab] = useState<"overview" | "team" | "projects" | "performance">("overview")
+  const [timeRange, setTimeRange] = useState<"today" | "week" | "month" | "all">("week")
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list")
 
   // Set mounted state to prevent SSR issues
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Fetch tasks and projects from API
+  // Fetch tasks, projects, and team members from API
   useEffect(() => {
     if (!mounted || !user || authLoading) return;
 
@@ -80,6 +107,7 @@ export default function DashboardPage() {
         if (!token) {
           setTasks([])
           setProjects([])
+          setTeamMembers([])
           return
         }
 
@@ -99,6 +127,30 @@ export default function DashboardPage() {
           }
         } else {
           throw new Error(`Tasks API returned ${tasksResponse.status}`);
+        }
+
+        // Fetch team members
+        try {
+          const usersResponse = await fetch('/api/tasks?type=users', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (usersResponse.ok) {
+            const usersData = await usersResponse.json();
+            if (usersData.success && usersData.data) {
+              const members = usersData.data.users.map((u: any) => ({
+                id: u.id,
+                name: u.name,
+                email: u.email,
+                role: u.role
+              }));
+              setTeamMembers(members);
+            }
+          }
+        } catch (usersError) {
+          console.warn('Users API not available:', usersError);
         }
 
         // Fetch projects
@@ -131,31 +183,122 @@ export default function DashboardPage() {
     fetchData();
   }, [user, authLoading, mounted])
 
-  // Filter tasks based on search and filter
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = searchQuery === "" || 
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    
-    const matchesFilter = filterStatus === "all" || task.status === filterStatus
-    
-    return matchesSearch && matchesFilter
-  })
+  // Calculate team member statistics
+  const teamMemberStats = useMemo(() => {
+    if (!teamMembers.length || !tasks.length) return [];
+
+    return teamMembers.map(member => {
+      const memberTasks = tasks.filter(task => 
+        task.created_by === member.id || task.assigned_to === member.id
+      );
+      
+      return {
+        ...member,
+        taskCount: memberTasks.length,
+        createdCount: tasks.filter(t => t.created_by === member.id).length,
+        assignedCount: tasks.filter(t => t.assigned_to === member.id).length,
+        completedCount: memberTasks.filter(t => t.status === 'done').length,
+        pendingCount: memberTasks.filter(t => t.status !== 'done').length,
+        inProgressCount: memberTasks.filter(t => t.status === 'in_progress').length,
+        overdueCount: memberTasks.filter(t => 
+          t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+        ).length,
+        lastActive: memberTasks
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]?.updated_at || null
+      };
+    }).sort((a, b) => b.taskCount - a.taskCount);
+  }, [teamMembers, tasks]);
+
+  // Filter tasks based on search and filters
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      // Search filter
+      const matchesSearch = searchQuery === "" || 
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (task.creator_name && task.creator_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (task.assignee_name && task.assignee_name.toLowerCase().includes(searchQuery.toLowerCase()))
+      
+      // Status filter
+      const matchesFilter = filterStatus === "all" || task.status === filterStatus
+      
+      // User filter
+      const matchesUser = filterUser === "all" || 
+        task.created_by?.toString() === filterUser || 
+        task.assigned_to?.toString() === filterUser
+      
+      // Priority filter
+      const matchesPriority = filterPriority === "all" || task.priority === filterPriority
+      
+      // Time range filter
+      const taskDate = new Date(task.created_at);
+      const now = new Date();
+      let matchesTime = true;
+      
+      switch (timeRange) {
+        case "today":
+          matchesTime = taskDate.toDateString() === now.toDateString();
+          break;
+        case "week":
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          matchesTime = taskDate >= weekAgo;
+          break;
+        case "month":
+          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          matchesTime = taskDate >= monthAgo;
+          break;
+        case "all":
+          matchesTime = true;
+          break;
+      }
+      
+      return matchesSearch && matchesFilter && matchesUser && matchesPriority && matchesTime;
+    });
+  }, [tasks, searchQuery, filterStatus, filterUser, filterPriority, timeRange]);
+
+  // Get recent tasks (for overview)
+  const recentTasks = [...filteredTasks]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 10)
+
+  // Get my tasks
+  const myTasks = tasks.filter(t => t.assigned_to === user?.id)
+
+  // Calculate stats - updated to include team insights
+  const stats = {
+    total: tasks.length,
+    completed: tasks.filter(t => t.status === 'done').length,
+    inProgress: tasks.filter(t => t.status === 'in_progress').length,
+    todo: tasks.filter(t => t.status === 'todo').length,
+    review: tasks.filter(t => t.status === 'review').length,
+    paused: tasks.filter(t => t.status === 'paused').length,
+    highPriority: tasks.filter(t => t.priority === 'high').length,
+    mediumPriority: tasks.filter(t => t.priority === 'medium').length,
+    lowPriority: tasks.filter(t => t.priority === 'low').length,
+    overdue: tasks.filter(t => 
+      t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
+    ).length,
+    myTasks: tasks.filter(t => t.assigned_to === user?.id).length,
+    myCompleted: tasks.filter(t => 
+      t.assigned_to === user?.id && t.status === 'done'
+    ).length,
+    activeProjects: projects.filter(p => p.status === 'active').length,
+    teamMembers: teamMemberStats.length,
+    teamTasks: teamMemberStats.reduce((sum, member) => sum + (member.taskCount || 0), 0),
+    teamCompleted: teamMemberStats.reduce((sum, member) => sum + (member.completedCount || 0), 0),
+  }
+
+  // Calculate completion percentage
+  const completionPercentage = stats.total > 0 
+    ? Math.round((stats.completed / stats.total) * 100)
+    : 0
+
+  const teamCompletionPercentage = stats.teamTasks > 0
+    ? Math.round((stats.teamCompleted / stats.teamTasks) * 100)
+    : 0
 
   // Handle status update
   const handleStatusUpdate = async (taskId: number, newStatus: DatabaseTask['status']) => {
-    console.log('🔄 [Dashboard] Status Update Called');
-    console.log('🔄 Task ID:', taskId);
-    console.log('🔄 New Status:', newStatus);
-    
-    // Validate the status value
-    const validStatuses = ['todo', 'in_progress', 'review', 'done', 'paused'];
-    if (!validStatuses.includes(newStatus)) {
-      console.error('❌ Invalid status value:', newStatus);
-      toast.error(`Invalid status: ${newStatus}. Must be one of: ${validStatuses.join(', ')}`);
-      return;
-    }
-    
     try {
       setIsUpdatingStatus(taskId)
       const token = localStorage.getItem('auth_token')
@@ -170,28 +313,29 @@ export default function DashboardPage() {
       })
 
       const data = await response.json()
-      console.log('📥 Dashboard Status Update Response:', data);
       
       if (response.ok && data.success) {
         // Animate task update
-        document.getElementById(`task-${taskId}`)?.classList.add('animate-update-pulse')
-        setTimeout(() => {
-          document.getElementById(`task-${taskId}`)?.classList.remove('animate-update-pulse')
-        }, 1000)
+        const taskElement = document.getElementById(`task-${taskId}`);
+        if (taskElement) {
+          taskElement.classList.add('animate-update-pulse');
+          setTimeout(() => {
+            taskElement.classList.remove('animate-update-pulse');
+          }, 1000);
+        }
         
         setTasks(prev => prev.map(task => 
           task.id === taskId ? { ...task, status: newStatus, updated_at: new Date().toISOString() } : task
         ))
-        toast.success(`Task status updated to ${getStatusDisplay(newStatus)}`)
+        toast.success(`Task status updated to ${getStatusDisplay(newStatus)}`);
       } else {
-        console.error('❌ Status update failed:', data);
-        toast.error(data.error || 'Failed to update task status')
+        toast.error(data.error || 'Failed to update task status');
       }
     } catch (error: any) {
-      console.error('🔴 Network error:', error)
-      toast.error(error.message || 'Failed to update task status')
+      console.error('🔴 Network error:', error);
+      toast.error(error.message || 'Failed to update task status');
     } finally {
-      setIsUpdatingStatus(null)
+      setIsUpdatingStatus(null);
     }
   }
 
@@ -213,35 +357,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Calculate stats - updated to include paused
-  const stats = {
-    total: tasks.length,
-    completed: tasks.filter(t => t.status === 'done').length,
-    inProgress: tasks.filter(t => t.status === 'in_progress').length,
-    todo: tasks.filter(t => t.status === 'todo').length,
-    review: tasks.filter(t => t.status === 'review').length,
-    paused: tasks.filter(t => t.status === 'paused').length,
-    highPriority: tasks.filter(t => t.priority === 'high').length,
-    mediumPriority: tasks.filter(t => t.priority === 'medium').length,
-    lowPriority: tasks.filter(t => t.priority === 'low').length,
-    overdue: tasks.filter(t => 
-      t.due_date && new Date(t.due_date) < new Date() && t.status !== 'done'
-    ).length,
-    myTasks: tasks.filter(t => t.assigned_to === user?.id).length,
-    myCompleted: tasks.filter(t => 
-      t.assigned_to === user?.id && t.status === 'done'
-    ).length,
-    activeProjects: projects.filter(p => p.status === 'active').length,
-  }
-
-  // Get recent tasks
-  const recentTasks = [...tasks]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5)
-
-  // Get my tasks
-  const myTasks = tasks.filter(t => t.assigned_to === user?.id)
-
   // Status display mapping
   const getStatusDisplay = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -251,7 +366,7 @@ export default function DashboardPage() {
       'done': 'Completed',
       'paused': 'Paused'
     }
-    return statusMap[status] || status
+    return statusMap[status] || status;
   }
 
   const statusColors: Record<string, string> = {
@@ -278,13 +393,15 @@ export default function DashboardPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'in_progress':
-        return <Play className="h-3 w-3" />
+        return <Play className="h-3 w-3" />;
       case 'done':
-        return <CheckCircle2 className="h-3 w-3" />
+        return <CheckCircle2 className="h-3 w-3" />;
       case 'paused':
-        return <PauseCircle className="h-3 w-3" />
+        return <PauseCircle className="h-3 w-3" />;
+      case 'review':
+        return <Edit className="h-3 w-3" />;
       default:
-        return null
+        return <FileText className="h-3 w-3" />;
     }
   }
 
@@ -320,9 +437,9 @@ export default function DashboardPage() {
 
   // Render status dropdown for a task
   const renderTaskStatusDropdown = (task: DatabaseTask) => {
-    const isUpdating = isUpdatingStatus === task.id
-    const statusOptions = getNextStatusOptions(task.status)
-    const canEdit = task.canEdit || user?.role === 'admin' || task.assigned_to === user?.id || task.created_by === user?.id
+    const isUpdating = isUpdatingStatus === task.id;
+    const statusOptions = getNextStatusOptions(task.status);
+    const canEdit = task.canEdit || user?.role === 'admin' || task.assigned_to === user?.id || task.created_by === user?.id;
 
     if (!canEdit || statusOptions.length === 0) return null;
 
@@ -367,10 +484,31 @@ export default function DashboardPage() {
     )
   }
 
-  // Calculate completion percentage
-  const completionPercentage = stats.total > 0 
-    ? Math.round((stats.completed / stats.total) * 100)
-    : 0
+  // Get user initials for avatar
+  const getUserInitials = (name: string) => {
+    if (!name) return "U";
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
+  // Get user color based on ID
+  const getUserColor = (id: number) => {
+    const colors = [
+      "from-blue-500 to-cyan-500",
+      "from-purple-500 to-pink-500",
+      "from-green-500 to-emerald-500",
+      "from-orange-500 to-red-500",
+      "from-indigo-500 to-purple-500",
+      "from-pink-500 to-rose-500",
+      "from-teal-500 to-cyan-500",
+      "from-yellow-500 to-amber-500"
+    ];
+    return colors[id % colors.length];
+  }
 
   // Show loading during SSR or auth loading
   if (!mounted || authLoading) {
@@ -444,11 +582,12 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                  Welcome back, {user?.name}!
+                  Team Dashboard
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-gray-500 dark:text-gray-400">
-                    {isLoading ? "Syncing data..." : `Managing ${stats.total} tasks across ${stats.activeProjects} projects`}
+                    {isLoading ? "Syncing data..." : 
+                     `${stats.teamMembers} members • ${stats.teamTasks} tasks • ${stats.teamCompleted} completed`}
                   </span>
                   <Badge className="glass-morphism border-white/20 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 capitalize">
                     {user?.role}
@@ -469,13 +608,18 @@ export default function DashboardPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search tasks..."
+                placeholder="Search tasks or members..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="glass-input pl-9 pr-4 py-2 rounded-xl border border-white/20 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 w-full md:w-64"
               />
             </div>
-            
+            <Link href="/team">
+              <Button variant="outline" className="border-white/20">
+                <Users className="h-4 w-4 mr-2" />
+                View All Members
+              </Button>
+            </Link>
           </div>
         </div>
       </motion.div>
@@ -490,19 +634,19 @@ export default function DashboardPage() {
         {[
           {
             title: "Team Tasks",
-            value: stats.total,
+            value: stats.teamTasks,
             icon: <Users className="h-5 w-5" />,
             color: "from-blue-500 to-cyan-500",
-            progress: completionPercentage,
-            label: `${stats.completed} completed • ${stats.paused} paused`
+            progress: teamCompletionPercentage,
+            label: `${stats.teamCompleted} completed • ${stats.teamMembers} members`
           },
           {
-            title: "My Tasks",
-            value: stats.myTasks,
-            icon: <Target className="h-5 w-5" />,
+            title: "Active Now",
+            value: stats.inProgress,
+            icon: <Activity className="h-5 w-5" />,
             color: "from-purple-500 to-pink-500",
-            progress: stats.myTasks > 0 ? Math.round((stats.myCompleted / stats.myTasks) * 100) : 0,
-            label: `${stats.myCompleted} done • ${myTasks.filter(t => t.status === 'in_progress').length} active`
+            progress: stats.total > 0 ? Math.round((stats.inProgress / stats.total) * 100) : 0,
+            label: `${stats.todo} pending • ${stats.review} in review`
           },
           {
             title: "High Priority",
@@ -513,12 +657,12 @@ export default function DashboardPage() {
             label: `${stats.overdue} overdue • ${stats.mediumPriority} medium`
           },
           {
-            title: "Active Projects",
-            value: stats.activeProjects,
-            icon: <FolderKanban className="h-5 w-5" />,
+            title: "Team Performance",
+            value: `${teamCompletionPercentage}%`,
+            icon: <TrendingUp className="h-5 w-5" />,
             color: "from-green-500 to-emerald-500",
-            progress: projects.length > 0 ? Math.min(100, (stats.activeProjects / projects.length) * 100) : 0,
-            label: `${projects.length} total • ${projects.filter(p => p.status === 'completed').length} completed`
+            progress: teamCompletionPercentage,
+            label: `On track • ${stats.teamCompleted}/${stats.teamTasks} done`
           }
         ].map((stat, index) => (
           <motion.div key={index} variants={itemVariants}>
@@ -537,7 +681,9 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold">{stat.value}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">tasks</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {stat.title.includes('%') ? 'complete' : 'total'}
+                  </span>
                 </div>
                 <Progress 
                   value={stat.progress} 
@@ -554,374 +700,701 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Tasks - 2/3 width */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="lg:col-span-2 space-y-6"
-        >
-          {/* Tabs */}
-          <div className="glass-morphism rounded-xl p-1 backdrop-blur-xl border border-white/20">
-            <div className="flex space-x-1">
-              {[
-                { id: "overview", label: "Overview", icon: <BarChart3 className="h-4 w-4" /> },
-                { id: "tasks", label: "All Tasks", icon: <CheckCircle2 className="h-4 w-4" /> },
-                { id: "projects", label: "Projects", icon: <FolderKanban className="h-4 w-4" /> }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    activeTab === tab.id
-                      ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300"
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              ))}
+      <div className="space-y-6">
+        {/* Tabs and Filters */}
+        <div className="glass-morphism rounded-2xl p-6 backdrop-blur-xl border border-white/20">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-blue-500" />
+                Team Overview
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                Track what everyone is working on
+              </p>
+            </div>
+            
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full lg:w-auto">
+              <TabsList className="glass-morphism border border-white/20">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="team" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Team ({stats.teamMembers})
+                </TabsTrigger>
+                <TabsTrigger value="projects" className="flex items-center gap-2">
+                  <FolderKanban className="h-4 w-4" />
+                  Projects
+                </TabsTrigger>
+                <TabsTrigger value="performance" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Performance
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {/* Filters Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Filter by Status</label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="glass-input border-white/20">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent className="glass-morphism border-white/20 backdrop-blur-xl">
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="review">Review</SelectItem>
+                  <SelectItem value="done">Completed</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Filter by Team Member</label>
+              <Select value={filterUser} onValueChange={setFilterUser}>
+                <SelectTrigger className="glass-input border-white/20">
+                  <SelectValue placeholder="All Members" />
+                </SelectTrigger>
+                <SelectContent className="glass-morphism border-white/20 backdrop-blur-xl max-h-[300px]">
+                  <SelectItem value="all">All Team Members</SelectItem>
+                  {teamMemberStats.map(member => (
+                    <SelectItem key={member.id} value={member.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        <div className={`h-6 w-6 rounded-full bg-gradient-to-r ${getUserColor(member.id)} flex items-center justify-center text-xs text-white`}>
+                          {getUserInitials(member.name)}
+                        </div>
+                        <span>{member.name}</span>
+                        <Badge className="ml-auto text-xs">{member.taskCount}</Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Filter by Priority</label>
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger className="glass-input border-white/20">
+                  <SelectValue placeholder="All Priorities" />
+                </SelectTrigger>
+                <SelectContent className="glass-morphism border-white/20 backdrop-blur-xl">
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Time Range</label>
+              <Select value={timeRange} onValueChange={setTimeRange as any}>
+                <SelectTrigger className="glass-input border-white/20">
+                  <SelectValue placeholder="This Week" />
+                </SelectTrigger>
+                <SelectContent className="glass-morphism border-white/20 backdrop-blur-xl">
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Recent Tasks Card */}
-          <Card className="glass-morphism border-white/20 shadow-xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-500/5 to-cyan-500/5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-blue-500" />
-                    Recent Team Tasks
-                  </CardTitle>
-                  <CardDescription>
-                    Latest updates from your team
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="glass-morphism border border-white/20">
-                        <Filter className="h-4 w-4 mr-2" />
-                        Filter
+          {/* View Mode Toggle */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  viewMode === 'list' 
+                    ? "bg-gradient-to-r from-blue-500 to-cyan-500" 
+                    : "glass-input border-white/20"
+                )}
+              >
+                <FileText className="h-4 w-4" />
+                <span className="ml-2">List</span>
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  viewMode === 'grid' 
+                    ? "bg-gradient-to-r from-blue-500 to-cyan-500" 
+                    : "glass-input border-white/20"
+                )}
+              >
+                <CheckSquare className="h-4 w-4" />
+                <span className="ml-2">Grid</span>
+              </Button>
+            </div>
+            
+            <div className="text-sm text-gray-500">
+              Showing {filteredTasks.length} of {stats.total} tasks
+              {filterUser !== "all" && ` • Filtered by ${teamMemberStats.find(m => m.id.toString() === filterUser)?.name}`}
+            </div>
+          </div>
+        </div>
+
+        {/* Content based on active tab */}
+        {activeTab === "overview" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Recent Tasks */}
+            <Card className="glass-morphism border-white/20 shadow-xl lg:col-span-2">
+              <CardHeader className="bg-gradient-to-r from-blue-500/5 to-cyan-500/5">
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-blue-500" />
+                  Recent Team Activity
+                </CardTitle>
+                <CardDescription>
+                  Latest tasks from your team members
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary"></div>
+                      <p className="text-gray-500 dark:text-gray-400">Loading team activity...</p>
+                    </div>
+                  </div>
+                ) : recentTasks.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 flex items-center justify-center mb-4">
+                      <MessageSquare className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No team activity yet</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+                      Be the first to create a task and share it with your team!
+                    </p>
+                    <Link href="/tasks">
+                      <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create New Task
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="glass-morphism border-white/20 backdrop-blur-xl">
-                      {["all", "todo", "in_progress", "review", "done", "paused"].map((status) => (
-                        <DropdownMenuItem
-                          key={status}
-                          onClick={() => setFilterStatus(status)}
-                          className="flex items-center gap-2"
-                        >
-                          <div className={`h-2 w-2 rounded-full ${
-                            status === "all" ? "bg-gray-400" :
-                            status === "todo" ? "bg-gray-500" :
-                            status === "in_progress" ? "bg-yellow-500" :
-                            status === "review" ? "bg-orange-500" :
-                            status === "done" ? "bg-green-500" : "bg-purple-500"
-                          }`} />
-                          {getStatusDisplay(status)}
-                          {filterStatus === status && <CheckCircle2 className="h-3 w-3 ml-auto" />}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Link href="/tasks">
-                    <Button variant="ghost" size="sm" className="group">
-                      View All
-                      <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary"></div>
-                    <p className="text-gray-500 dark:text-gray-400">Loading tasks...</p>
+                    </Link>
                   </div>
-                </div>
-              ) : recentTasks.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 flex items-center justify-center mb-4">
-                    <CheckCircle2 className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">No tasks yet</h3>
-                  <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-                    Be the first to create a task for your team!
-                  </p>
-                  <Link href="/tasks/new">
-                    <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Task
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
-                  <AnimatePresence>
-                    {recentTasks.map((task) => {
-                      const isAssignedToMe = task.assigned_to === user?.id
-                      
-                      return (
-                        <motion.div
-                          key={task.id}
-                          id={`task-${task.id}`}
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className={`p-4 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-cyan-500/5 transition-all duration-300 group ${priorityColors[task.priority]}`}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start gap-3 mb-3">
-                                <div className={`p-2 rounded-lg ${statusColors[task.status]} mt-1`}>
-                                  {getStatusIcon(task.status)}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                      {task.title}
-                                    </h4>
-                                    {isAssignedToMe && (
-                                      <Badge className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
-                                        Assigned to me
-                                      </Badge>
-                                    )}
+                ) : (
+                  <div className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
+                    <AnimatePresence>
+                      {recentTasks.map((task) => {
+                        const isAssignedToMe = task.assigned_to === user?.id;
+                        const isCreatedByMe = task.created_by === user?.id;
+                        
+                        return (
+                          <motion.div
+                            key={task.id}
+                            id={`task-${task.id}`}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className={`p-4 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-cyan-500/5 transition-all duration-300 group ${priorityColors[task.priority]}`}
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start gap-3 mb-3">
+                                  <div className="flex-shrink-0">
+                                    <div className={`h-10 w-10 rounded-full bg-gradient-to-r ${getUserColor(task.created_by || 0)} flex items-center justify-center text-white font-medium`}>
+                                      {task.creator_name ? getUserInitials(task.creator_name) : '?'}
+                                    </div>
                                   </div>
-                                  {renderRichDescription(task.description)}
-                                  <div className="flex flex-wrap items-center gap-3 mt-3">
-                                    {task.creator_name && (
-                                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-                                          <Users className="h-3 w-3" />
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                        {task.title}
+                                      </h4>
+                                      {isAssignedToMe && (
+                                        <Badge className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
+                                          Assigned to me
+                                        </Badge>
+                                      )}
+                                      {isCreatedByMe && (
+                                        <Badge className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 text-green-600 dark:text-green-400 border-green-500/20">
+                                          Created by me
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-2">
+                                      <span className="flex items-center gap-1">
+                                        <User className="h-3 w-3" />
+                                        {task.creator_name || 'Unknown'}
+                                      </span>
+                                      {task.assignee_name && task.assignee_name !== task.creator_name && (
+                                        <>
+                                          <ChevronRight className="h-3 w-3" />
+                                          <span className="flex items-center gap-1">
+                                            <Users className="h-3 w-3" />
+                                            {task.assignee_name}
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                    {renderRichDescription(task.description)}
+                                    <div className="flex flex-wrap items-center gap-3 mt-3">
+                                      {task.due_date && (
+                                        <div className={`flex items-center gap-2 text-sm ${
+                                          new Date(task.due_date) < new Date() && task.status !== 'done' 
+                                            ? 'text-red-500 font-medium' 
+                                            : 'text-gray-500 dark:text-gray-400'
+                                        }`}>
+                                          <Calendar className="h-4 w-4" />
+                                          <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
                                         </div>
-                                        <span>{task.creator_name}</span>
-                                      </div>
-                                    )}
-                                    {task.due_date && (
-                                      <div className={`flex items-center gap-2 text-sm ${
-                                        new Date(task.due_date) < new Date() && task.status !== 'done' 
-                                          ? 'text-red-500 font-medium' 
-                                          : 'text-gray-500 dark:text-gray-400'
-                                      }`}>
-                                        <Calendar className="h-4 w-4" />
-                                        <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
-                                      </div>
-                                    )}
-                                    <Badge 
-                                      className={`bg-gradient-to-r ${priorityColors[task.priority]} border-none`}
-                                    >
-                                      {priorityDisplay[task.priority]}
-                                    </Badge>
+                                      )}
+                                      <Badge 
+                                        className={`bg-gradient-to-r ${priorityColors[task.priority]} border-none`}
+                                      >
+                                        {priorityDisplay[task.priority]}
+                                      </Badge>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                            
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge className={cn("flex items-center gap-1.5", statusColors[task.status])}>
-                                {getStatusDisplay(task.status)}
-                              </Badge>
                               
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 rounded-full hover:bg-white/10"
-                                  title="View task details"
-                                  onClick={() => setViewingTask(task)}
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                </Button>
-                                {renderTaskStatusDropdown(task)}
+                              <div className="flex flex-col items-end gap-2">
+                                <Badge className={cn("flex items-center gap-1.5", statusColors[task.status])}>
+                                  {getStatusIcon(task.status)}
+                                  {getStatusDisplay(task.status)}
+                                </Badge>
+                                
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 rounded-full hover:bg-white/10"
+                                    title="View task details"
+                                    onClick={() => setViewingTask(task)}
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                  </Button>
+                                  {renderTaskStatusDropdown(task)}
+                                </div>
                               </div>
                             </div>
+                          </motion.div>
+                        )
+                      })}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Team Members Overview */}
+            <Card className="glass-morphism border-white/20 shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-purple-500/5 to-pink-500/5">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-500" />
+                  Team Members
+                </CardTitle>
+                <CardDescription>
+                  Task distribution across team
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {teamMemberStats.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 flex items-center justify-center mb-4">
+                      <Users className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400">No team members found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {teamMemberStats.slice(0, 5).map((member) => (
+                      <div 
+                        key={member.id}
+                        className="p-3 rounded-lg bg-gradient-to-r from-white/5 to-transparent hover:from-white/10 border border-white/10 transition-all duration-300"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`h-10 w-10 rounded-full bg-gradient-to-r ${getUserColor(member.id)} flex items-center justify-center text-white font-medium`}>
+                            {getUserInitials(member.name)}
                           </div>
-                        </motion.div>
-                      )
-                    })}
-                  </AnimatePresence>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Right Sidebar - My Tasks & Quick Stats */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="space-y-6"
-        >
-          {/* My Tasks Card */}
-          <Card className="glass-morphism border-white/20 shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-purple-500/5 to-pink-500/5">
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-purple-500" />
-                My Tasks
-              </CardTitle>
-              <CardDescription>
-                Your assigned tasks
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {myTasks.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">No tasks assigned yet</p>
-                  <Link href="/tasks">
-                    <Button variant="outline" className="w-full border-white/20">
-                      Browse Available Tasks
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Stats Overview */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: "To Do", value: myTasks.filter(t => t.status === 'todo').length, color: "from-gray-500 to-gray-600" },
-                      { label: "Active", value: myTasks.filter(t => t.status === 'in_progress').length, color: "from-yellow-500 to-amber-600" },
-                      { label: "Done", value: myTasks.filter(t => t.status === 'done').length, color: "from-green-500 to-emerald-600" },
-                    ].map((stat, index) => (
-                      <div 
-                        key={index}
-                        className="text-center p-3 rounded-xl bg-gradient-to-br from-white/10 to-transparent backdrop-blur-sm border border-white/10 hover:scale-105 transition-transform duration-300"
-                      >
-                        <div className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
-                          {stat.value}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {stat.label}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* My Tasks List */}
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-gray-600 dark:text-gray-400">Pending Actions</h4>
-                    {myTasks.slice(0, 3).map((task) => (
-                      <div 
-                        key={task.id}
-                        className="group p-3 rounded-lg bg-gradient-to-r from-white/5 to-transparent hover:from-white/10 border border-white/10 transition-all duration-300"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <button 
-                                onClick={() => setViewingTask(task)}
-                                className="text-sm font-medium text-left hover:text-blue-500 transition-colors"
-                              >
-                                {task.title}
-                              </button>
-                              {task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done' && (
-                                <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-                              )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-medium truncate">{member.name}</h4>
+                              <Badge className="text-xs capitalize">{member.role}</Badge>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <Badge className={cn("text-xs", statusColors[task.status])}>
-                                {getStatusDisplay(task.status)}
-                              </Badge>
-                              <span className="text-xs text-gray-500">
-                                Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No date'}
+                            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                {member.completedCount || 0} done
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {member.pendingCount || 0} pending
                               </span>
                             </div>
                           </div>
                         </div>
+                        {member.taskCount && member.taskCount > 0 && (
+                          <div className="mt-2">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span>Progress</span>
+                              <span>{member.completedCount}/{member.taskCount}</span>
+                            </div>
+                            <Progress 
+                              value={member.completedCount && member.taskCount ? 
+                                (member.completedCount / member.taskCount) * 100 : 0} 
+                              className="h-1.5 bg-gray-200/50 dark:bg-gray-700/50"
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="pt-4 border-t border-white/10">
-                    <h4 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-3">Quick Actions</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                     
-                      <Link href="/tasks">
+                    
+                    <div className="pt-4 border-t border-white/10">
+                      <Link href="/team">
                         <Button variant="outline" className="w-full border-white/20">
-                          View All
+                          <Users className="h-4 w-4 mr-2" />
+                          View All Team Members
                         </Button>
                       </Link>
                     </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === "team" && (
+          <Card className="glass-morphism border-white/20 shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-green-500/5 to-emerald-500/5">
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-green-500" />
+                Team Performance Dashboard
+              </CardTitle>
+              <CardDescription>
+                Detailed breakdown of team member contributions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {teamMemberStats.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-green-500/10 to-emerald-500/10 flex items-center justify-center mb-4">
+                    <Users className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No team data available</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mb-6">
+                    Team members and tasks will appear here once created
+                  </p>
+                  <Link href="/team">
+                    <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
+                      <Users className="h-4 w-4 mr-2" />
+                      Go to Team Members
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto mb-6">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Team Member</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Role</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Total Tasks</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Created</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Assigned</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Completed</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Completion Rate</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {teamMemberStats.map((member) => {
+                          const completionRate = member.taskCount && member.completedCount ? 
+                            Math.round((member.completedCount / member.taskCount) * 100) : 0;
+                          
+                          return (
+                            <tr key={member.id} className="hover:bg-white/5 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className={`h-8 w-8 rounded-full bg-gradient-to-r ${getUserColor(member.id)} flex items-center justify-center text-white text-xs font-medium`}>
+                                    {getUserInitials(member.name)}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">{member.name}</div>
+                                    <div className="text-xs text-gray-500 truncate max-w-[150px]">
+                                      {member.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <Badge className={`capitalize ${
+                                  member.role === 'admin' 
+                                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' 
+                                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                }`}>
+                                  {member.role}
+                                </Badge>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="font-semibold">{member.taskCount || 0}</div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm">{member.createdCount || 0}</div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm">{member.assignedCount || 0}</div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                  <span className="font-medium text-green-600 dark:text-green-400">
+                                    {member.completedCount || 0}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 max-w-[80px]">
+                                    <Progress 
+                                      value={completionRate} 
+                                      className="h-2 bg-gray-200/50 dark:bg-gray-700/50"
+                                    />
+                                  </div>
+                                  <span className={`text-sm font-medium ${
+                                    completionRate >= 80 ? 'text-green-600' :
+                                    completionRate >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>
+                                    {completionRate}%
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setFilterUser(member.id.toString());
+                                      setActiveTab("overview");
+                                    }}
+                                    className="text-xs h-7 border-white/20"
+                                  >
+                                    View Tasks
+                                  </Button>
+                                  <Link href="/team">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      <ChevronRight className="h-3 w-3" />
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-white/10">
+                    <Link href="/team">
+                      <Button className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
+                        <Users className="h-4 w-4 mr-2" />
+                        View Complete Team Dashboard
+                      </Button>
+                    </Link>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "projects" && (
+          <Card className="glass-morphism border-white/20 shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-orange-500/5 to-red-500/5">
+              <CardTitle className="flex items-center gap-2">
+                <FolderKanban className="h-5 w-5 text-orange-500" />
+                Team Projects
+              </CardTitle>
+              <CardDescription>
+                Projects and initiatives across the team
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {projects.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-orange-500/10 to-red-500/10 flex items-center justify-center mb-4">
+                    <FolderKanban className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mb-6">
+                    Create your first project to organize team tasks
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {projects.map((project) => (
+                    <Card key={project.id} className="border-white/20 bg-gradient-to-br from-white/5 to-transparent">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">{project.name}</CardTitle>
+                          <Badge className={
+                            project.status === 'active' ? 'bg-green-500/20 text-green-600' :
+                            project.status === 'completed' ? 'bg-blue-500/20 text-blue-600' :
+                            'bg-gray-500/20 text-gray-600'
+                          }>
+                            {project.status}
+                          </Badge>
+                        </div>
+                        <CardDescription className="line-clamp-2">
+                          {project.description || 'No description'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <User className="h-4 w-4" />
+                            <span>Owner: {project.user_name || 'Unassigned'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Calendar className="h-4 w-4" />
+                            <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <div className="pt-3 border-t border-white/10">
+                            <Link href={`/projects/${project.id}`}>
+                              <Button variant="outline" size="sm" className="w-full border-white/20">
+                                View Project
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               )}
             </CardContent>
           </Card>
+        )}
 
-          {/* Performance Card */}
-          <Card className="glass-morphism border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-                Performance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Completion Rate</span>
-                  <span className="text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
-                    {completionPercentage}%
-                  </span>
-                </div>
-                <Progress value={completionPercentage} className="h-2 bg-gray-200/50 dark:bg-gray-700/50" />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">On-time Delivery</span>
-                  <span className="text-lg font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                    {stats.overdue === 0 ? '100%' : `${Math.max(0, 100 - (stats.overdue / stats.total) * 100)}%`}
-                  </span>
-                </div>
-                <Progress 
-                  value={Math.max(0, 100 - (stats.overdue / stats.total) * 100)} 
-                  className="h-2 bg-gray-200/50 dark:bg-gray-700/50" 
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="glass-morphism border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-orange-500" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentTasks.slice(0, 3).map((task, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className={`h-2 w-2 rounded-full animate-pulse ${
-                      task.status === 'done' ? 'bg-green-500' :
-                      task.status === 'in_progress' ? 'bg-yellow-500' :
-                      task.status === 'review' ? 'bg-orange-500' : 'bg-gray-500'
-                    }`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{task.title}</p>
-                      <p className="text-xs text-gray-500 truncate">
-                        Updated {new Date(task.updated_at).toLocaleDateString()}
-                      </p>
+        {activeTab === "performance" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="glass-morphism border-white/20 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-blue-500" />
+                  Team Productivity Trends
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Overall Completion</span>
+                      <span className="font-semibold">{teamCompletionPercentage}%</span>
                     </div>
-                    <Badge className={statusColors[task.status]}>
-                      {getStatusDisplay(task.status)}
-                    </Badge>
+                    <Progress value={teamCompletionPercentage} className="h-3" />
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                  
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">On-time Delivery</span>
+                      <span className="font-semibold">
+                        {stats.overdue === 0 ? '100%' : `${Math.max(0, 100 - (stats.overdue / stats.total) * 100)}%`}
+                      </span>
+                    </div>
+                    <Progress 
+                      value={Math.max(0, 100 - (stats.overdue / stats.total) * 100)} 
+                      className="h-3 bg-gray-200/50 dark:bg-gray-700/50" 
+                    />
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Active Engagement</span>
+                      <span className="font-semibold">
+                        {stats.teamMembers > 0 ? Math.round((stats.inProgress + stats.review) / stats.teamMembers) : 0} tasks/member
+                      </span>
+                    </div>
+                    <div className="h-3 bg-gray-200/50 dark:bg-gray-700/50 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000"
+                        style={{ width: `${Math.min(100, (stats.inProgress + stats.review) / stats.teamMembers * 20)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-morphism border-white/20 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-amber-500" />
+                  Top Performers
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {teamMemberStats.slice(0, 3).map((member, index) => {
+                  const completionRate = member.taskCount && member.completedCount ? 
+                    Math.round((member.completedCount / member.taskCount) * 100) : 0;
+                  
+                  return (
+                    <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-white/5 to-transparent hover:from-white/10 transition-all duration-300 mb-3">
+                      <div className="relative">
+                        <div className={`h-10 w-10 rounded-full bg-gradient-to-r ${getUserColor(member.id)} flex items-center justify-center text-white font-medium`}>
+                          {getUserInitials(member.name)}
+                        </div>
+                        {index === 0 && (
+                          <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 flex items-center justify-center">
+                            <Trophy className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-medium">{member.name}</h4>
+                          <span className={`text-sm font-semibold ${
+                            completionRate >= 80 ? 'text-green-600' :
+                            completionRate >= 50 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {completionRate}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                          <span>{member.taskCount || 0} tasks</span>
+                          <span>{member.completedCount || 0} completed</span>
+                          <span>{member.overdueCount || 0} overdue</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {teamMemberStats.length === 0 && (
+                  <div className="text-center py-8">
+                    <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-r from-amber-500/10 to-yellow-500/10 flex items-center justify-center mb-4">
+                      <Award className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400">No team data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Task View Modal */}

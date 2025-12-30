@@ -33,7 +33,7 @@ export default function TimesheetPage() {
   const [currentTimer, setCurrentTimer] = useState<{ startTime: Date; taskId: string } | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
 
-  const isCEO = user?.role === "ceo"
+  const isCEO = String(user?.role).toLowerCase() === "ceo"
 
   // Simulate loading
   useEffect(() => {
