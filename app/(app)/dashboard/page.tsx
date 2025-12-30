@@ -714,26 +714,59 @@ export default function DashboardPage() {
               </p>
             </div>
             
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full lg:w-auto">
-              <TabsList className="glass-morphism border border-white/20">
-                <TabsTrigger value="overview" className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="team" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Team ({stats.teamMembers})
-                </TabsTrigger>
-                <TabsTrigger value="projects" className="flex items-center gap-2">
-                  <FolderKanban className="h-4 w-4" />
-                  Projects
-                </TabsTrigger>
-                <TabsTrigger value="performance" className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Performance
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+           <Tabs 
+  value={activeTab} 
+  onValueChange={(v) => setActiveTab(v as any)} 
+  className="w-full"
+>
+  <TabsList className="glass-morphism border border-white/20 w-full lg:w-auto overflow-x-auto flex flex-nowrap lg:flex-wrap">
+    {/* Overview Tab */}
+    <TabsTrigger 
+      value="overview" 
+      className="flex items-center gap-1 sm:gap-2 px-3 py-2 text-xs sm:text-sm min-w-[80px] sm:min-w-[100px] flex-shrink-0"
+    >
+      <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+      <span className="hidden xs:inline">Overview</span>
+      <span className="xs:hidden">View</span>
+    </TabsTrigger>
+    
+    {/* Team Tab */}
+    <TabsTrigger 
+      value="team" 
+      className="flex items-center gap-1 sm:gap-2 px-3 py-2 text-xs sm:text-sm min-w-[80px] sm:min-w-[100px] flex-shrink-0"
+    >
+      <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+      <span className="hidden xs:inline">Team</span>
+      <span className="xs:hidden">Team</span>
+      <Badge 
+        variant="outline" 
+        className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center p-0 ml-1 text-[10px] sm:text-xs font-bold border-white/30 bg-white/10"
+      >
+        {stats.teamMembers > 9 ? '9+' : stats.teamMembers}
+      </Badge>
+    </TabsTrigger>
+    
+    {/* Projects Tab */}
+    <TabsTrigger 
+      value="projects" 
+      className="flex items-center gap-1 sm:gap-2 px-3 py-2 text-xs sm:text-sm min-w-[80px] sm:min-w-[100px] flex-shrink-0"
+    >
+      <FolderKanban className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+      <span className="hidden xs:inline">Projects</span>
+      <span className="xs:hidden">Proj</span>
+    </TabsTrigger>
+    
+    {/* Performance Tab */}
+    <TabsTrigger 
+      value="performance" 
+      className="flex items-center gap-1 sm:gap-2 px-3 py-2 text-xs sm:text-sm min-w-[80px] sm:min-w-[100px] flex-shrink-0"
+    >
+      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+      <span className="hidden xs:inline">Performance</span>
+      <span className="xs:hidden">Perf</span>
+    </TabsTrigger>
+  </TabsList>
+</Tabs>
           </div>
 
           {/* Filters Row */}
