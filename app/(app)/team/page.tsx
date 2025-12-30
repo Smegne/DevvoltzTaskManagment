@@ -17,7 +17,8 @@ import {
   Shield, Target, Download, BarChart3, Zap,
   Calendar, User, Tag, Clock, MessageSquare,
   X, ExternalLink, Copy, Check,
-  ArrowUpRight, ArrowDownRight, Circle
+  ArrowUpRight, ArrowDownRight, Circle,
+  FolderKanban
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { 
   Home,
   CheckSquare,
@@ -11,11 +11,12 @@ import {
   MoreVertical,
   Clock,
   BarChart3,
-  ChevronUp
+  ChevronUp,
+  Smartphone
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import {
@@ -43,9 +44,10 @@ interface NavItemConfig {
   label: string
   icon: React.ComponentType<{ className?: string }>
   showBadge: boolean
-  badgeType: 'tasks' | 'projects' | 'notifications' | 'team' | 'timesheet' | 'analytics' | 'none'
+  badgeType: 'tasks' | 'projects' | 'notifications' | 'team' | 'timesheet' | 'analytics' | 'mobile' | 'none'
   description?: string
   isMainNav?: boolean
+  isMobileOnly?: boolean
 }
 
 // Custom hook for fetching notification counts
@@ -60,7 +62,7 @@ const useNotificationCounts = () => {
     timesheetPending: 0
   })
   const [isLoading, setIsLoading] = useState(true)
-  const { user } = useAuth()
+  const { user, getToken } = useAuth() // Use auth context to get token
 
   useEffect(() => {
     if (!user) return
@@ -68,7 +70,9 @@ const useNotificationCounts = () => {
     const fetchCounts = async () => {
       try {
         setIsLoading(true)
-        const token = localStorage.getItem('auth_token')
+        
+        // Use auth context to get token instead of localStorage
+        const token = await getToken()
         
         if (!token) {
           console.warn('No auth token found for notification counts')
@@ -188,108 +192,130 @@ const useNotificationCounts = () => {
 
     // Cleanup
     return () => clearInterval(interval)
-  }, [user])
+  }, [user, getToken])
 
   return { counts, isLoading }
 }
 
-// Main navigation items (shown in bottom nav)
-const mainNavItems: NavItemConfig[] = [
-  { 
-    href: "/dashboard", 
-    label: "Home", 
-    icon: Home,
-    showBadge: true,
-    badgeType: 'tasks',
-    description: "Dashboard overview",
-    isMainNav: true
-  },
-  { 
-    href: "/tasks", 
-    label: "Tasks", 
-    icon: CheckSquare,
-    showBadge: true,
-    badgeType: 'tasks',
-    description: "Task management",
-    isMainNav: true
-  },
-  { 
-    href: "/team", 
-    label: "Team", 
-    icon: Users,
-    showBadge: true,
-    badgeType: 'team',
-    description: "Team collaboration",
-    isMainNav: true
-  },
-  { 
-    href: "/projects", 
-    label: "Projects", 
-    icon: FolderKanban,
-    showBadge: true,
-    badgeType: 'projects',
-    description: "Project management",
-    isMainNav: true
-  },
-]
+// Check if device is mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false)
 
-// Secondary navigation items (hidden in "More" dropdown)
-const secondaryNavItems: NavItemConfig[] = [
-  { 
-    href: "/notifications", 
-    label: "Notifications", 
-    icon: Bell,
-    showBadge: true,
-    badgeType: 'notifications',
-    description: "Alerts and notifications"
-  },
-  { 
-    href: "/timesheet", 
-    label: "Timesheet", 
-    icon: Clock,
-    showBadge: true,
-    badgeType: 'timesheet',
-    description: "Time tracking"
-  },
-  { 
-    href: "/analytics", 
-    label: "Analytics", 
-    icon: BarChart3,
-    showBadge: false,
-    badgeType: 'analytics',
-    description: "Reports and analytics"
-  },
-]
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
-// Function to get badge count based on type
-const getBadgeCount = (
-  badgeType: NavItemConfig['badgeType'], 
-  counts: NotificationCounts
-): number => {
-  switch (badgeType) {
-    case 'tasks':
-      // Show pending + overdue tasks
-      return counts.pendingTasks + counts.overdueTasks
-    case 'projects':
-      return counts.activeProjects
-    case 'notifications':
-      return counts.unreadNotifications
-    case 'team':
-      return counts.teamActivity
-    case 'timesheet':
-      return counts.timesheetPending
-    case 'analytics':
-      return 0
-    default:
-      return 0
-  }
+  return isMobile
 }
 
 export function BottomNav() {
   const pathname = usePathname()
-  const { user } = useAuth()
+  const router = useRouter()
+  const { user, getToken } = useAuth()
   const { counts, isLoading } = useNotificationCounts()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const isMobile = useIsMobile()
+
+  // Main navigation items (shown in bottom nav)
+  const mainNavItems: NavItemConfig[] = [
+    { 
+      href: "/dashboard", 
+      label: "Home", 
+      icon: Home,
+      showBadge: true,
+      badgeType: 'tasks',
+      description: "Dashboard overview",
+      isMainNav: true
+    },
+    { 
+      href: "/tasks", 
+      label: "Tasks", 
+      icon: CheckSquare,
+      showBadge: true,
+      badgeType: 'tasks',
+      description: "Task management",
+      isMainNav: true
+    },
+    { 
+      href: "/team", 
+      label: "Team", 
+      icon: Users,
+      showBadge: true,
+      badgeType: 'team',
+      description: "Team collaboration",
+      isMainNav: true
+    },
+  ]
+
+  // Secondary navigation items (hidden in "More" dropdown)
+  const secondaryNavItems: NavItemConfig[] = [
+    { 
+      href: "/projects", 
+      label: "Projects", 
+      icon: FolderKanban,
+      showBadge: true,
+      badgeType: 'projects',
+      description: "Project management",
+      isMainNav: false,
+      isMobileOnly: false
+    },
+    { 
+      href: "/notifications", 
+      label: "Notifications", 
+      icon: Bell,
+      showBadge: true,
+      badgeType: 'notifications',
+      description: "Alerts and notifications"
+    },
+    { 
+      href: "/timesheet", 
+      label: "Timesheet", 
+      icon: Clock,
+      showBadge: true,
+      badgeType: 'timesheet',
+      description: "Time tracking"
+    },
+    { 
+      href: "/analytics", 
+      label: "Analytics", 
+      icon: BarChart3,
+      showBadge: false,
+      badgeType: 'analytics',
+      description: "Reports and analytics"
+    },
+  ]
+
+  // Mobile-only items (only show in mobile view in "More" dropdown)
+  const mobileNavItems: NavItemConfig[] = [
+    { 
+      href: "/mobile-projects", 
+      label: "Mobile Projects", 
+      icon: Smartphone,
+      showBadge: false,
+      badgeType: 'mobile',
+      description: "Mobile project view",
+      isMobileOnly: true
+    },
+  ]
+
+  // Filter navigation items based on device
+  const getFilteredNavItems = useCallback(() => {
+    const allSecondaryItems = [...secondaryNavItems]
+    
+    // If on mobile, add mobile-only items
+    if (isMobile) {
+      allSecondaryItems.push(...mobileNavItems)
+    }
+    
+    return allSecondaryItems
+  }, [isMobile])
 
   // Check if the current path matches or starts with the href
   const isActive = (href: string) => {
@@ -299,14 +325,39 @@ export function BottomNav() {
     return pathname === href || pathname.startsWith(`${href}/`)
   }
 
-  // Handle badge click
+  // Function to get badge count based on type
+  const getBadgeCount = (
+    badgeType: NavItemConfig['badgeType']
+  ): number => {
+    switch (badgeType) {
+      case 'tasks':
+        // Show pending + overdue tasks
+        return counts.pendingTasks + counts.overdueTasks
+      case 'projects':
+        return counts.activeProjects
+      case 'notifications':
+        return counts.unreadNotifications
+      case 'team':
+        return counts.teamActivity
+      case 'timesheet':
+        return counts.timesheetPending
+      case 'analytics':
+        return 0
+      case 'mobile':
+        return 0
+      default:
+        return 0
+    }
+  }
+
+  // Handle badge click with client-side navigation
   const handleBadgeClick = async (e: React.MouseEvent, badgeType: string, href: string) => {
     e.preventDefault()
     e.stopPropagation()
     
     if (badgeType === 'notifications') {
       try {
-        const token = localStorage.getItem('auth_token')
+        const token = await getToken()
         if (!token) return
         
         // Mark all notifications as read
@@ -324,15 +375,15 @@ export function BottomNav() {
       } catch (error) {
         console.error('Failed to mark notifications as read:', error)
       }
-    } else {
-      // Navigate to the page
-      window.location.href = href
     }
+    
+    // Use Next.js router for client-side navigation
+    router.push(href)
   }
 
   // Render badge component
   const renderBadge = (item: NavItemConfig) => {
-    const badgeCount = item.showBadge ? getBadgeCount(item.badgeType, counts) : 0
+    const badgeCount = item.showBadge ? getBadgeCount(item.badgeType) : 0
     const hasBadge = badgeCount > 0
     
     if (!hasBadge) return null
@@ -340,15 +391,16 @@ export function BottomNav() {
     return (
       <button
         onClick={(e) => handleBadgeClick(e, item.badgeType, item.href)}
-        className="absolute -top-1 -right-1 z-10"
+        className="absolute -top-1 -right-1 z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full"
+        aria-label={`${badgeCount} notifications for ${item.label}`}
       >
         <Badge 
-          variant="destructive" // Always red color
+          variant="destructive"
           className={cn(
             "h-5 min-w-5 p-0 flex items-center justify-center text-xs border-2 border-background font-bold",
-            "bg-red-600 hover:bg-red-700", // Red background
-            badgeCount > 3 && "animate-pulse", // Pulse for high counts
-            "shadow-sm" // Add subtle shadow
+            "bg-red-600 hover:bg-red-700",
+            badgeCount > 3 && "animate-pulse",
+            "shadow-sm transition-transform hover:scale-110"
           )}
         >
           {badgeCount > 9 ? '9+' : badgeCount}
@@ -361,7 +413,7 @@ export function BottomNav() {
   const renderNavItem = (item: NavItemConfig, isDropdown = false) => {
     const active = isActive(item.href)
     const Icon = item.icon
-    const badgeCount = item.showBadge ? getBadgeCount(item.badgeType, counts) : 0
+    const badgeCount = item.showBadge ? getBadgeCount(item.badgeType) : 0
     const hasBadge = badgeCount > 0
 
     if (isDropdown) {
@@ -370,17 +422,27 @@ export function BottomNav() {
           <Link
             href={item.href}
             className={cn(
-              "flex items-center justify-between w-full px-3 py-2 rounded-md",
-              active && "bg-primary/10 text-primary"
+              "flex items-center justify-between w-full px-3 py-2 rounded-md transition-colors",
+              active && "bg-primary/10 text-primary font-medium",
+              !active && "hover:bg-muted/50"
             )}
             onClick={() => setDropdownOpen(false)}
+            prefetch={true}
           >
             <div className="flex items-center gap-3">
               <Icon className="h-4 w-4" />
               <span>{item.label}</span>
+              {item.isMobileOnly && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                  Mobile
+                </span>
+              )}
             </div>
             {hasBadge && (
-              <Badge variant="destructive" className="h-5 min-w-5 p-0 text-xs">
+              <Badge 
+                variant="destructive" 
+                className="h-5 min-w-5 p-0 text-xs font-bold"
+              >
                 {badgeCount > 9 ? '9+' : badgeCount}
               </Badge>
             )}
@@ -395,10 +457,12 @@ export function BottomNav() {
         href={item.href}
         className={cn(
           "relative flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-xl transition-all duration-200 min-w-[64px] group",
+          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
           active 
-            ? "text-primary" 
+            ? "text-primary bg-primary/5" 
             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
         )}
+        prefetch={true}
       >
         {/* Badge indicator */}
         {renderBadge(item)}
@@ -418,7 +482,7 @@ export function BottomNav() {
         
         {/* Label */}
         <span className={cn(
-          "text-xs font-medium transition-all truncate max-w-[70px]",
+          "text-xs font-medium transition-all truncate max-w-[70px] text-center",
           active ? "text-primary font-semibold" : "font-normal"
         )}>
           {item.label}
@@ -433,9 +497,14 @@ export function BottomNav() {
   }
 
   // Calculate total badge count for "More" button
-  const moreBadgeCount = secondaryNavItems.reduce((total, item) => {
-    return total + (item.showBadge ? getBadgeCount(item.badgeType, counts) : 0)
+  const moreBadgeCount = getFilteredNavItems().reduce((total, item) => {
+    return total + (item.showBadge ? getBadgeCount(item.badgeType) : 0)
   }, 0)
+
+  // Don't render if no user (not logged in)
+  if (!user) {
+    return null
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg safe-area-pb">
@@ -447,17 +516,22 @@ export function BottomNav() {
         <div className="relative">
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
-              <button className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-xl transition-all duration-200 min-w-[64px]",
-                "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                dropdownOpen && "text-primary bg-primary/10"
-              )}>
+              <button 
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-xl transition-all duration-200 min-w-[64px]",
+                  "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
+                  "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  dropdownOpen && "text-primary bg-primary/10"
+                )}
+                aria-label="More navigation options"
+                aria-expanded={dropdownOpen}
+              >
                 {/* Badge for total counts in "More" */}
                 {moreBadgeCount > 0 && (
                   <div className="absolute -top-1 -right-1 z-10">
                     <Badge 
                       variant="destructive"
-                      className="h-5 min-w-5 p-0 flex items-center justify-center text-xs border-2 border-background font-bold"
+                      className="h-5 min-w-5 p-0 flex items-center justify-center text-xs border-2 border-background font-bold animate-pulse"
                     >
                       {moreBadgeCount > 9 ? '9+' : moreBadgeCount}
                     </Badge>
@@ -490,14 +564,15 @@ export function BottomNav() {
             <DropdownMenuContent 
               align="center" 
               side="top" 
-              className="w-48 mb-2 shadow-xl border"
+              className="w-56 mb-2 shadow-xl border max-h-[70vh] overflow-y-auto"
+              onCloseAutoFocus={(e) => e.preventDefault()}
             >
               <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                More Options
+                More Options {isMobile && "(Mobile View)"}
               </div>
               <DropdownMenuSeparator />
               
-              {secondaryNavItems.map(item => renderNavItem(item, true))}
+              {getFilteredNavItems().map(item => renderNavItem(item, true))}
               
               <DropdownMenuSeparator />
               <div className="px-2 py-1.5 text-xs text-muted-foreground">

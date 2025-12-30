@@ -277,7 +277,7 @@ export default function TasksPage() {
       'science': '🔬',
       'english': '📚',
       'history': '🏛️',
-      'project': '🚀',
+      'task': '🚀',
       'frontend': '💻',
       'backend': '⚙️',
       'design': '🎨',
