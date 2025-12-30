@@ -861,135 +861,175 @@ export default function DashboardPage() {
                   Latest tasks from your team members
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary"></div>
-                      <p className="text-gray-500 dark:text-gray-400">Loading team activity...</p>
+             <CardContent className="p-0">
+  {isLoading ? (
+    <div className="flex items-center justify-center py-8 sm:py-10 md:py-12">
+      <div className="flex flex-col items-center gap-2 sm:gap-3">
+        <div className="h-6 w-6 sm:h-8 sm:w-8 animate-spin rounded-full border-3 sm:border-4 border-primary/30 border-t-primary"></div>
+        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+          Loading team activity...
+        </p>
+      </div>
+    </div>
+  ) : recentTasks.length === 0 ? (
+    <div className="text-center py-8 sm:py-10 md:py-12 px-4">
+      <div className="mx-auto h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 rounded-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 flex items-center justify-center mb-3 sm:mb-4">
+        <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-gray-400" />
+      </div>
+      <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-1.5 sm:mb-2 text-gray-900 dark:text-gray-100">
+        No team activity yet
+      </h3>
+      <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-4 sm:mb-5 md:mb-6 max-w-xs sm:max-w-sm mx-auto">
+        Be the first to create a task and share it with your team!
+      </p>
+      <Link href="/tasks" className="inline-block">
+        <Button className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-sm sm:text-base px-4 py-2 h-10 sm:h-11">
+          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+          Create New Task
+        </Button>
+      </Link>
+    </div>
+  ) : (
+    <div className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
+      <AnimatePresence>
+        {recentTasks.map((task) => {
+          const isAssignedToMe = task.assigned_to === user?.id;
+          const isCreatedByMe = task.created_by === user?.id;
+          
+          return (
+            <motion.div
+              key={task.id}
+              id={`task-${task.id}`}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className={`p-3 sm:p-4 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-cyan-500/5 transition-all duration-300 group ${priorityColors[task.priority]}`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+                {/* Left Content - Task Info */}
+                <div className="flex-1 min-w-0">
+                  {/* User Info Row */}
+                  <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                    <div className="flex-shrink-0">
+                      <div className={`h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-gradient-to-r ${getUserColor(task.created_by || 0)} flex items-center justify-center text-white text-xs sm:text-sm font-medium`}>
+                        {task.creator_name ? getUserInitials(task.creator_name) : '?'}
+                      </div>
                     </div>
-                  </div>
-                ) : recentTasks.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-blue-500/10 to-cyan-500/10 flex items-center justify-center mb-4">
-                      <MessageSquare className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">No team activity yet</h3>
-                    <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-                      Be the first to create a task and share it with your team!
-                    </p>
-                    <Link href="/tasks">
-                      <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create New Task
-                      </Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
-                    <AnimatePresence>
-                      {recentTasks.map((task) => {
-                        const isAssignedToMe = task.assigned_to === user?.id;
-                        const isCreatedByMe = task.created_by === user?.id;
+                    
+                    <div className="flex-1 min-w-0">
+                      {/* Task Title and Badges */}
+                      <div className="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-2 mb-1 sm:mb-2">
+                        <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                          {task.title}
+                        </h4>
                         
-                        return (
-                          <motion.div
-                            key={task.id}
-                            id={`task-${task.id}`}
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className={`p-4 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-cyan-500/5 transition-all duration-300 group ${priorityColors[task.priority]}`}
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start gap-3 mb-3">
-                                  <div className="flex-shrink-0">
-                                    <div className={`h-10 w-10 rounded-full bg-gradient-to-r ${getUserColor(task.created_by || 0)} flex items-center justify-center text-white font-medium`}>
-                                      {task.creator_name ? getUserInitials(task.creator_name) : '?'}
-                                    </div>
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                        {task.title}
-                                      </h4>
-                                      {isAssignedToMe && (
-                                        <Badge className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
-                                          Assigned to me
-                                        </Badge>
-                                      )}
-                                      {isCreatedByMe && (
-                                        <Badge className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 text-green-600 dark:text-green-400 border-green-500/20">
-                                          Created by me
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                      <span className="flex items-center gap-1">
-                                        <User className="h-3 w-3" />
-                                        {task.creator_name || 'Unknown'}
-                                      </span>
-                                      {task.assignee_name && task.assignee_name !== task.creator_name && (
-                                        <>
-                                          <ChevronRight className="h-3 w-3" />
-                                          <span className="flex items-center gap-1">
-                                            <Users className="h-3 w-3" />
-                                            {task.assignee_name}
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
-                                    {renderRichDescription(task.description)}
-                                    <div className="flex flex-wrap items-center gap-3 mt-3">
-                                      {task.due_date && (
-                                        <div className={`flex items-center gap-2 text-sm ${
-                                          new Date(task.due_date) < new Date() && task.status !== 'done' 
-                                            ? 'text-red-500 font-medium' 
-                                            : 'text-gray-500 dark:text-gray-400'
-                                        }`}>
-                                          <Calendar className="h-4 w-4" />
-                                          <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
-                                        </div>
-                                      )}
-                                      <Badge 
-                                        className={`bg-gradient-to-r ${priorityColors[task.priority]} border-none`}
-                                      >
-                                        {priorityDisplay[task.priority]}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className="flex flex-col items-end gap-2">
-                                <Badge className={cn("flex items-center gap-1.5", statusColors[task.status])}>
-                                  {getStatusIcon(task.status)}
-                                  {getStatusDisplay(task.status)}
-                                </Badge>
-                                
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 rounded-full hover:bg-white/10"
-                                    title="View task details"
-                                    onClick={() => setViewingTask(task)}
-                                  >
-                                    <Eye className="h-3.5 w-3.5" />
-                                  </Button>
-                                  {renderTaskStatusDropdown(task)}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )
-                      })}
-                    </AnimatePresence>
+                        <div className="flex flex-wrap gap-1">
+                          {isAssignedToMe && (
+                            <Badge className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-xs px-1.5 py-0 h-5">
+                              Assigned to me
+                            </Badge>
+                          )}
+                          {isCreatedByMe && (
+                            <Badge className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 text-green-600 dark:text-green-400 border-green-500/20 text-xs px-1.5 py-0 h-5">
+                              Created by me
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* User Info */}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          <span className="truncate max-w-[100px] xs:max-w-[150px] sm:max-w-[200px]">
+                            {task.creator_name || 'Unknown'}
+                          </span>
+                        </span>
+                        {task.assignee_name && task.assignee_name !== task.creator_name && (
+                          <>
+                            <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-gray-400" />
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              <span className="truncate max-w-[100px] xs:max-w-[150px] sm:max-w-[200px]">
+                                {task.assignee_name}
+                              </span>
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Task Description */}
+                      <div className="mb-2 sm:mb-3">
+                        {renderRichDescription(task.description)}
+                      </div>
+
+                      {/* Task Details */}
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        {task.due_date && (
+                          <div className={`flex items-center gap-1.5 text-xs sm:text-sm ${
+                            new Date(task.due_date) < new Date() && task.status !== 'done' 
+                              ? 'text-red-500 font-medium' 
+                              : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                            <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                            <span className="whitespace-nowrap">
+                              Due: {new Date(task.due_date).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <Badge 
+                          className={`bg-gradient-to-r ${priorityColors[task.priority]} border-none text-xs px-2 py-0.5 h-5`}
+                        >
+                          {priorityDisplay[task.priority]}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </CardContent>
+                </div>
+
+                {/* Right Content - Status and Actions */}
+                <div className="flex items-start justify-between sm:justify-end gap-2 sm:gap-3 self-end sm:self-start">
+                  {/* Status Badge */}
+                  <Badge className={cn(
+                    "flex items-center gap-1.5 text-xs sm:text-sm px-2 py-0.5 h-5 sm:h-6",
+                    statusColors[task.status],
+                    "flex-shrink-0"
+                  )}>
+                    {getStatusIcon(task.status)}
+                    <span className="hidden xs:inline">
+                      {getStatusDisplay(task.status)}
+                    </span>
+                    <span className="xs:hidden">
+                      {getStatusDisplay(task.status).split(' ')[0]}
+                    </span>
+                  </Badge>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1 sm:gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0 rounded-full hover:bg-white/10 flex-shrink-0"
+                      title="View task details"
+                      onClick={() => setViewingTask(task)}
+                      aria-label="View task details"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    
+                    {renderTaskStatusDropdown(task)}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
+      </AnimatePresence>
+    </div>
+  )}
+</CardContent>
             </Card>
 
             {/* Team Members Overview */}

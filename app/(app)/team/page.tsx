@@ -1153,257 +1153,314 @@ export default function TeamPage() {
             }
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                <p className="text-gray-600 dark:text-gray-400">Loading team members...</p>
+       <CardContent className="p-3 sm:p-4 md:p-6">
+  {isLoading ? (
+    <div className="flex items-center justify-center py-8 sm:py-10 md:py-12">
+      <div className="flex flex-col items-center gap-2 sm:gap-3">
+        <div className="h-6 w-6 sm:h-8 sm:w-8 animate-spin rounded-full border-3 sm:border-4 border-primary border-t-transparent"></div>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+          Loading team members...
+        </p>
+      </div>
+    </div>
+  ) : filteredAndSortedMembers.length === 0 ? (
+    <div className="text-center py-8 sm:py-10 md:py-12 px-2">
+      <Users className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-gray-400 mx-auto mb-2 sm:mb-3 md:mb-4" />
+      <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2">
+        No team members found
+      </h3>
+      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
+        {searchQuery 
+          ? "Try adjusting your search terms"
+          : "No members match the current filters"
+        }
+      </p>
+    </div>
+  ) : (
+    <div className="space-y-3 sm:space-y-4">
+      {filteredAndSortedMembers.map((member) => (
+        <motion.div
+          key={member.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+        >
+          {/* Member Header - Responsive Layout */}
+          <div className="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            {/* Left Section: Avatar and Info */}
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+              <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
+                <AvatarFallback className={`${getUserColor(member.id)} text-sm sm:text-base`}>
+                  {getUserInitials(member.name)}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 min-w-0">
+                {/* Name and Role Row */}
+                <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
+                  <h3 className="font-semibold text-base sm:text-lg truncate">
+                    {member.name}
+                  </h3>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge 
+                      variant={member.role === 'admin' ? 'destructive' : 'default'}
+                      className="text-xs px-1.5 py-0 h-5"
+                    >
+                      {member.role}
+                    </Badge>
+                    {member.id === currentUser.id && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
+                        You
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email */}
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate mb-2 sm:mb-1">
+                  {member.email}
+                </p>
+
+                {/* Stats Row - Responsive Layout */}
+                <div className="flex flex-wrap gap-2 sm:gap-4">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+                      <span className="font-medium">{member.taskCount}</span> tasks
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+                      <span className="font-medium">{member.completedCount}</span> completed
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
+                      member.completionRate >= 70 ? 'text-green-600' :
+                      member.completionRate >= 30 ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {member.completionRate}% completion
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          ) : filteredAndSortedMembers.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No team members found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {searchQuery 
-                  ? "Try adjusting your search terms"
-                  : "No members match the current filters"
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredAndSortedMembers.map((member) => (
-                <motion.div
-                  key={member.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="border rounded-lg overflow-hidden"
-                >
-                  {/* Member Header */}
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className={getUserColor(member.id)}>
-                          {getUserInitials(member.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-lg">
-                            {member.name}
-                          </h3>
-                          <Badge variant={member.role === 'admin' ? 'destructive' : 'default'}>
-                            {member.role}
-                          </Badge>
-                          {member.id === currentUser.id && (
-                            <Badge variant="outline">You</Badge>
-                          )}
-                        </div>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">
-                          {member.email}
-                        </p>
-                        <div className="flex items-center gap-4 mt-1">
-                          <span className="text-sm text-gray-500">
-                            {member.taskCount} tasks
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {member.completedCount} completed
-                          </span>
-                          <span className={`text-sm font-medium ${
-                            member.completionRate >= 70 ? 'text-green-600' :
-                            member.completionRate >= 30 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {member.completionRate}% completion
-                          </span>
-                        </div>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleUserExpansion(member.id)}
+            {/* Right Section: Actions */}
+            <div className="flex items-center justify-between sm:justify-end gap-2 self-end sm:self-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 sm:px-3 text-xs sm:text-sm"
+                onClick={() => toggleUserExpansion(member.id)}
+              >
+                <span className="hidden xs:inline">
+                  {expandedUsers.has(member.id) ? 'Hide Tasks' : 'Show Tasks'}
+                </span>
+                <span className="xs:hidden">
+                  {expandedUsers.has(member.id) ? 'Hide' : 'Tasks'}
+                </span>
+                <ChevronRight className={`h-3 w-3 sm:h-4 sm:w-4 ml-1 transition-transform ${
+                  expandedUsers.has(member.id) ? 'rotate-90' : ''
+                }`} />
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 sm:h-8 sm:w-8 p-0"
+                    aria-label="More options"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 sm:w-56">
+                  <DropdownMenuLabel className="text-xs sm:text-sm">Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => window.open(`/tasks?assigned=${member.id}`, '_blank')}
+                    className="text-xs sm:text-sm py-2"
+                  >
+                    <Target className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    View All Tasks
+                  </DropdownMenuItem>
+                  
+                  {currentUser.role === 'admin' && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => handleAssignTask(member.id)}
+                        className="text-xs sm:text-sm py-2"
                       >
-                        {expandedUsers.has(member.id) ? 'Hide Tasks' : 'Show Tasks'}
-                        <ChevronRight className={`h-4 w-4 ml-1 transition-transform ${
-                          expandedUsers.has(member.id) ? 'rotate-90' : ''
-                        }`} />
-                      </Button>
+                        <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                        Assign New Task
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => toast.info('Edit user functionality coming soon')}
+                        className="text-xs sm:text-sm py-2"
+                      >
+                        <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                        Edit User
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => window.open(`/tasks?assigned=${member.id}`, '_blank')}
-                          >
-                            <Target className="h-4 w-4 mr-2" />
-                            View All Tasks
-                          </DropdownMenuItem>
-                          
-                          {currentUser.role === 'admin' && (
-                            <>
-                              <DropdownMenuItem
-                                onClick={() => handleAssignTask(member.id)}
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Assign New Task
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => toast.info('Edit user functionality coming soon')}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit User
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+          {/* Tasks Section - Responsive */}
+          <AnimatePresence>
+            {expandedUsers.has(member.id) && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="border-t"
+              >
+                <div className="p-3 sm:p-4 bg-white dark:bg-gray-900">
+                  <div className="mb-3 sm:mb-4 flex flex-col xs:flex-row xs:items-center justify-between gap-2">
+                    <h4 className="font-medium text-sm sm:text-base">
+                      {member.name}'s Tasks ({member.tasks.length})
+                    </h4>
+                    {currentUser.role === 'user' && member.id !== currentUser.id && (
+                      <Badge variant="outline" className="text-xs px-2 py-0 h-5 self-start xs:self-center">
+                        <Lock className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" />
+                        View Only
+                      </Badge>
+                    )}
                   </div>
 
-                  {/* Tasks Section */}
-                  <AnimatePresence>
-                    {expandedUsers.has(member.id) && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="border-t"
-                      >
-                        <div className="p-4 bg-white dark:bg-gray-900">
-                          <div className="mb-4 flex items-center justify-between">
-                            <h4 className="font-medium">
-                              {member.name}'s Tasks ({member.tasks.length})
-                            </h4>
-                            {currentUser.role === 'user' && member.id !== currentUser.id && (
-                              <Badge variant="outline" className="text-xs">
-                                <Lock className="h-3 w-3 mr-1" />
-                                View Only
-                              </Badge>
-                            )}
-                          </div>
-
-                          {member.tasks.length === 0 ? (
-                            <div className="text-center py-8">
-                              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                              <p className="text-gray-600 dark:text-gray-400">
-                                No tasks assigned
-                              </p>
-                              {currentUser.role === 'admin' && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="mt-4"
-                                  onClick={() => handleAssignTask(member.id)}
+                  {member.tasks.length === 0 ? (
+                    <div className="text-center py-6 sm:py-8">
+                      <FileText className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-gray-400 mx-auto mb-2 sm:mb-3 md:mb-4" />
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
+                        No tasks assigned
+                      </p>
+                      {currentUser.role === 'admin' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs sm:text-sm"
+                          onClick={() => handleAssignTask(member.id)}
+                        >
+                          <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                          Assign First Task
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 sm:space-y-3">
+                      {member.tasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 gap-2 sm:gap-3"
+                        >
+                          {/* Task Info */}
+                          <div className="flex-1 min-w-0">
+                            {/* Task Title and Badges */}
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
+                              <span className="font-medium text-sm sm:text-base truncate">
+                                {task.title}
+                              </span>
+                              <div className="flex flex-wrap gap-1">
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs px-1.5 py-0 h-5 ${getStatusColor(task.status)}`}
                                 >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Assign First Task
-                                </Button>
+                                  {task.status.replace('_', ' ')}
+                                </Badge>
+                                <Badge 
+                                  className={`text-xs px-1.5 py-0 h-5 ${getPriorityColor(task.priority)}`}
+                                >
+                                  {task.priority}
+                                </Badge>
+                                {task.isReadOnly && (
+                                  <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
+                                    <Lock className="h-2.5 w-2.5 mr-1" />
+                                    Read-only
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Task Details */}
+                            <div className="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-3 text-xs sm:text-sm text-gray-500">
+                              {task.module_name && (
+                                <span className="truncate">
+                                  Module: <span className="font-medium">{task.module_name}</span>
+                                </span>
+                              )}
+                              {task.due_date && (
+                                <span className="truncate whitespace-nowrap">
+                                  Due: <span className="font-medium">
+                                    {new Date(task.due_date).toLocaleDateString()}
+                                  </span>
+                                </span>
                               )}
                             </div>
-                          ) : (
-                            <div className="space-y-3">
-                              {member.tasks.map((task) => (
-                                <div
-                                  key={task.id}
-                                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+                          </div>
+
+                          {/* Task Actions */}
+                          <div className="flex items-center justify-end sm:justify-start gap-1 self-end sm:self-center">
+                            {/* View button */}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                              onClick={() => handleTaskAction(task, 'view')}
+                              title="View task details"
+                              aria-label="View task"
+                            >
+                              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+
+                            {/* Edit/Delete buttons */}
+                            {canEditTask(task) ? (
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                                  onClick={() => handleTaskAction(task, 'edit')}
+                                  title="Edit task"
+                                  aria-label="Edit task"
                                 >
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="font-medium">
-                                        {task.title}
-                                      </span>
-                                      <Badge 
-                                        variant="outline" 
-                                        className={getStatusColor(task.status)}
-                                      >
-                                        {task.status.replace('_', ' ')}
-                                      </Badge>
-                                      <Badge className={getPriorityColor(task.priority)}>
-                                        {task.priority}
-                                      </Badge>
-                                      {task.isReadOnly && (
-                                        <Badge variant="outline" className="text-xs">
-                                          <Lock className="h-3 w-3 mr-1" />
-                                          Read-only
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                                      {task.module_name && (
-                                        <span>Module: {task.module_name}</span>
-                                      )}
-                                      {task.due_date && (
-                                        <span>
-                                          Due: {new Date(task.due_date).toLocaleDateString()}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-1">
-                                    {/* View button - opens modal */}
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleTaskAction(task, 'view')}
-                                      title="View task details"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-
-                                    {/* Edit/Delete buttons - conditional based on permissions */}
-                                    {canEditTask(task) ? (
-                                      <>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() => handleTaskAction(task, 'edit')}
-                                          title="Edit task"
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="text-red-600 hover:text-red-700"
-                                          onClick={() => handleTaskAction(task, 'delete')}
-                                          title="Delete task"
-                                        >
-                                          <AlertCircle className="h-4 w-4" />
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <div className="px-2 py-1 text-xs text-gray-400 italic">
-                                        Read-only
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-600 hover:text-red-700"
+                                  onClick={() => handleTaskAction(task, 'delete')}
+                                  title="Delete task"
+                                  aria-label="Delete task"
+                                >
+                                  <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="px-2 py-1 text-xs text-gray-400 italic whitespace-nowrap">
+                                Read-only
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      ))}
+    </div>
+  )}
+</CardContent>
       </Card>
     </div>
   )
