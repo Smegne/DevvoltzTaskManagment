@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import TaskViewModal from "@/components/task-view-modal"
+import { TaskDialog } from "@/components/task-dialog" // Import TaskDialog
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -78,7 +79,10 @@ export default function DashboardPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<number | null>(null)
+  
   const [viewingTask, setViewingTask] = useState<DatabaseTask | null>(null)
+  const [editingTask, setEditingTask] = useState<DatabaseTask | null>(null) // Edit modal state
+  const [isSubmittingTask, setIsSubmittingTask] = useState(false) // For TaskDialog submission
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -182,6 +186,74 @@ export default function DashboardPage() {
 
     fetchData();
   }, [user, authLoading, mounted])
+
+  // Handle edit task request from modal
+  const handleEditTask = (task: DatabaseTask) => {
+    console.log("Edit task requested:", task);
+    
+    // Close the view modal
+    setViewingTask(null);
+    
+    // Open the edit dialog with the task data
+    setEditingTask(task);
+  };
+
+  // Handle task save from TaskDialog
+  const handleSaveTask = async (taskData: any) => {
+    try {
+      setIsSubmittingTask(true);
+      const token = localStorage.getItem('auth_token');
+      
+      // Check if it's an update (has id) or create (no id)
+      const isUpdate = taskData.id !== undefined;
+      const url = isUpdate ? `/api/tasks/${taskData.id}` : '/api/tasks';
+      const method = isUpdate ? 'PUT' : 'POST';
+      
+      console.log(`${isUpdate ? 'Updating' : 'Creating'} task:`, taskData);
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(taskData)
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        toast.success(isUpdate ? 'Task updated successfully!' : 'Task created successfully!');
+        
+        // Refresh tasks list
+        const tasksResponse = await fetch('/api/tasks', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (tasksResponse.ok) {
+          const tasksData = await tasksResponse.json();
+          if (tasksData.success && tasksData.data) {
+            setTasks(tasksData.data.tasks || []);
+          }
+        }
+        
+        // Close the edit modal
+        setEditingTask(null);
+        
+        // If we were editing a task that was being viewed, update it
+        if (isUpdate && viewingTask && viewingTask.id === taskData.id) {
+          setViewingTask(prev => prev ? { ...prev, ...taskData } : null);
+        }
+      } else {
+        toast.error(data.error || `Failed to ${isUpdate ? 'update' : 'create'} task`);
+      }
+    } catch (error: any) {
+      console.error('Task save error:', error);
+      toast.error(error.message || 'Network error. Please try again.');
+    } finally {
+      setIsSubmittingTask(false);
+    }
+  };
 
   // Calculate team member statistics
   const teamMemberStats = useMemo(() => {
@@ -559,7 +631,7 @@ export default function DashboardPage() {
     show: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   }
 
-  return (
+ return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-black p-4 md:p-6 space-y-6">
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden -z-10">
@@ -1470,13 +1542,25 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Task View Modal */}
+      {/* Task View Modal - This passes the function to TaskViewModal via onEditRequest */}
       <TaskViewModal 
         task={viewingTask}
         open={!!viewingTask}
         onOpenChange={(open) => !open && setViewingTask(null)}
+        onEditRequest={handleEditTask}
         user={user}
       />
+
+      {/* Task Edit Dialog - This is the popup that will open when Edit is clicked */}
+      <TaskDialog
+        open={!!editingTask}
+        onOpenChange={(open) => {
+          if (!open) setEditingTask(null); // Close the dialog
+        }}
+        onSave={handleSaveTask}
+        task={editingTask}  // Pass the task to edit
+        isSubmitting={isSubmittingTask}
+      />
     </div>
-  )
+  );
 }
