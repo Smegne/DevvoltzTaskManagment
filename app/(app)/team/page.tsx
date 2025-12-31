@@ -1429,7 +1429,7 @@ export default function TeamPage() {
                                   title="Edit task"
                                   aria-label="Edit task"
                                 >
-                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                 
                                 </Button>
                                 <Button
                                   size="sm"
